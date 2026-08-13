@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitHub Users Explorer</title>
+    <link rel="stylesheet" href="./css/styles.css">
+</head>
+
+<body>
+
+    <header class="app-header">
+        <h1>GitHub Users Explorer</h1>
+    </header>
+
+    <main>
+        <section id="filter" class="filter-section">
+            <label for="min-login-length">Minimum login length:</label>
+            <input id="min-login-length" type="number" min="1" value="4">
+            <button id="apply-filter" class="primary">Apply</button>
+        </section>
+
+        <p id="user-count"></p>
+        <p id="status"></p>
+
+        <section id="users-container"></section>
+
+        <template id="user-card-template">
+            <article class="user-card">
+                <img class="avatar" alt="avatar">
+                <div class="info">
+                    <h2 class="login"></h2>
+                    <span class="id-badge"></span>
+                    <a class="details-link" href="#">Details</a>
+                </div>
+            </article>
+        </template>
+
+        <nav id="pagination" class="pagination"></nav>
+    </main>
+
+    <script type="module" src="./js/users.js"></script>
+</body>
+
+</html>

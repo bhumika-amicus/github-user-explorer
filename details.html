@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>User Details - GitHub Explorer</title>
+	<link rel="stylesheet" href="./css/styles.css">
+</head>
+
+<body>
+
+	<header class="app-header">
+		<h1>GitHub Users Explorer</h1>
+	</header>
+
+	<main>
+		<p><a href="index.html" class="back-link">← Back to list</a></p>
+
+		<p id="detail-status"></p>
+
+		<!-- Profile Section Container -->
+		<section id="profile-card" class="detail-section"></section>
+		<!-- Followers Section -->
+		<section class="detail-section">
+			<h2>Followers</h2>
+			<div id="followers-list"></div>
+		</section>
+		<!-- Repositories Section -->
+		<section class="detail-section">
+			<h2>Repositories</h2>
+			<div id="repos-list"></div>
+		</section>
+		<!-- Templates -->
+		<template id="profile-template">
+			<div class="profile-header">
+				<img class="profile-avatar avatar-large" alt="Profile avatar">
+				<div class="profile-info">
+					<h2 class="profile-name"></h2>
+					<p class="profile-handle muted"></p>
+					<p class="profile-bio"></p>
+					<div class="profile-stats">
+						<span>Repos: <strong class="profile-repos-count">0</strong></span>
+						<span>Followers: <strong class="profile-followers-count">0</strong></span>
+						<span>Following: <strong class="profile-following-count">0</strong></span>
+					</div>
+				</div>
+			</div>
+		</template>
+		<template id="follower-item-template">
+			<div class="follower-item">
+				<img class="follower-avatar" alt="follower avatar">
+				<a class="follower-link" href="#"></a>
+			</div>
+		</template>
+		<template id="repo-item-template">
+			<div class="repo-item">
+				<div class="repo-title">
+					<a class="repo-link" target="_blank" rel="noopener"></a>
+					<span class="repo-stars"></span>
+				</div>
+				<p class="repo-desc muted"></p>
+			</div>
+		</template>
+	</main>
+
+	<script type="module" src="./js/details.js"></script>
+</body>
+
+</html>
