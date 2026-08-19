@@ -74,7 +74,7 @@ github-user-explorer/
 ├── src/                   # TypeScript source code
 │   ├── api.ts             # Typed ApiService class & singleton instance
 │   ├── details.ts         # User details controller
-│   ├── types.ts           # Centralized TypeScript interfaces & Union types
+│   ├── types.ts           # Centralized TypeScript interfaces & Utility types
 │   ├── ui.ts              # Strongly-typed DOM rendering module
 │   └── users.ts           # Users dashboard controller & state manager
 ├── screenshots/           # Application & compiler output screenshots
@@ -144,28 +144,6 @@ export interface GitHubUser {
     followers?: number;
     following?: number;
     bio?: string | null;
-}
-
-export interface GitHubFollower {
-    login: string;
-    id: number;
-    avatar_url: string;
-    html_url: string;
-}
-
-export interface GitHubRepo {
-    id: number;
-    name: string;
-    full_name: string;
-    html_url: string;
-    description: string | null;
-    stargazers_count: number;
-}
-
-export interface TransformedUser {
-    login: string;
-    id: number;
-    avatar: string;
 }
 ```
 
@@ -303,7 +281,6 @@ To transition from procedural standalone functions to Object-Oriented Architectu
 
 #### 1. Before (Task 4 Standalone Exported Functions):
 ```typescript
-// Standalone functions with no state encapsulation
 export async function fetchUsers(): Promise<ApiResult<GitHubUser[]>> {
     return await safeHttpGet<GitHubUser[]>(`${BASE_URL}/users`);
 }
@@ -431,7 +408,30 @@ function handlePaginationClick(event: Event): void {
 }
 ```
 
-### 🏆 Compilation Milestone:
-Running `npx tsc` now completes with **0 errors** across the entire codebase!
 
+## 📌 Task 7: Use Utility Types and Transform API Data
+
+Instead of manually duplicating properties across interfaces, we refactored [src/types.ts](file:///c:/CustomApps/github-user-explorer/src/types.ts) using TypeScript's built-in **Utility Types** (`Pick`).
+
+### Before vs After Refactoring:
+
+*(Note: Below is an example showing how `GitHubFollower` was refactored using `Pick`.)*
+
+#### 1. Before (Manual Interface Duplication):
+```typescript
+// Duplicate manual property declarations
+export interface GitHubFollower {
+    login: string;
+    id: number;
+    avatar_url: string;
+    html_url: string;
+}
+```
+
+#### 2. After (Derived using `Pick` Utility Type):
+```typescript
+// Derived directly from master GitHubUser interface using Pick:
+export type GitHubFollower = Pick<GitHubUser, 'login' | 'id' | 'avatar_url' | 'html_url'>;
+
+```
 ---

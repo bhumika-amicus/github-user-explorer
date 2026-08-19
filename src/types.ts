@@ -1,4 +1,4 @@
-// 1. Full User profile payload returned from /users and /users/{username}
+//Full User profile payload returned from /users and /users/{username}
 export interface GitHubUser {
     login: string;
     id: number;
@@ -11,15 +11,10 @@ export interface GitHubUser {
     bio?: string | null;
 }
 
-// 2. Follower payload returned from /users/{username}/followers
-export interface GitHubFollower {
-    login: string;
-    id: number;
-    avatar_url: string;
-    html_url: string;
-}
+// Follower payload derived from GitHubUser using Pick utility type
+export type GitHubFollower = Pick<GitHubUser, 'login' | 'id' | 'avatar_url' | 'html_url'>;
 
-// 3. Repository payload returned from /users/{username}/repos
+//Repository payload returned from /users/{username}/repos
 export interface GitHubRepo {
     id: number;
     name: string;
@@ -29,15 +24,12 @@ export interface GitHubRepo {
     stargazers_count: number;
 }
 
+//Transformed User for User Card UI display derived using Pick & type intersection
+export type TransformedUser = Pick<GitHubUser, 'login' | 'id'> & {
+    avatar: string;
+};
 
-// Using Generic Type for API Results
+//Generic Union Type for API Results
 export type ApiResult<T> =
     | { success: true; data: T }
     | { success: false; error: string };
-
-// Transformed User for User Card UI display
-export interface TransformedUser {
-    login: string;
-    id: number;
-    avatar: string;
-}
