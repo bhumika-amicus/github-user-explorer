@@ -434,4 +434,59 @@ export interface GitHubFollower {
 export type GitHubFollower = Pick<GitHubUser, 'login' | 'id' | 'avatar_url' | 'html_url'>;
 
 ```
+
 ---
+
+## 📌 Task 8: User Details with Parallel API Requests (`Promise.all` vs `Promise.allSettled`)
+
+In `src/details.ts`, we implemented an industry-standard **2-Stage Parent-Child Architecture** for loading user details:
+
+### 1. Architectural Design Flow:
+
+```text
+[ Stage 1: Validate Parent Entity ]
+      │
+      ▼
+Fetch User Profile ──> (404 Not Found?) ──> STOP! Display "User Profile Not Found".
+      │
+      │ (Success: User Profile Exists!)
+      ▼
+[ Stage 2: Concurrent Child Execution ]
+      ├── Fetch Followers  ┐
+      └── Fetch Repos      ┴──> Executed in parallel via Promise.allSettled
+```
+
+### 2. Implementation (`src/details.ts`):
+
+```typescript
+// STAGE 1: Validate Parent User Profile First
+const profileRes = await apiService.getUserProfile(username);
+
+if (!profileRes.success) {
+    // If parent user does not exist (404), stop immediately & display clean message
+    renderProfileError(`User profile for "@${username}" was not found.`);
+    return;
+}
+
+renderProfile(profileRes.data);
+
+// STAGE 2: User exists! Fetch Followers and Repos concurrently using Promise.allSettled
+const [followersSettled, reposSettled] = await Promise.allSettled([
+    apiService.getUserFollowers(username),
+    apiService.getUserRepos(username)
+]);
+```
+
+### 3. Decision & Technical Justification (`Promise.all` vs `Promise.allSettled`):
+
+| Feature | `Promise.all` | `Promise.allSettled` |
+| :--- | :--- | :--- |
+| **Failure Behavior** | Short-circuits immediately if any promise rejects. | Never short-circuits; waits for all promises to settle regardless of failure. |
+| **Result Format** | Array of raw values `[T1, T2]`. | Array of status objects `[{ status: 'fulfilled', value }, { status: 'rejected', reason }]`. |
+
+#### Why `Promise.allSettled` was selected for Stage 2:
+1. **Rate Limit & Performance Protection:** Stage 1 verifies the parent profile exists first, avoiding 3 wasted API calls when a user doesn't exist (404).
+2. **Partial Failure Isolation:** In Stage 2, `Promise.allSettled` handles Followers and Repos concurrently. If fetching Followers fails due to a network glitch or rate limit (`followersSettled.status === 'rejected'` or `followersRes.success === false`), a friendly *"Unable to load followers at this time"* message is displayed while the Repositories section still renders cleanly!
+
+---
+

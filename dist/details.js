@@ -1,6 +1,6 @@
 import { apiService } from './api.js';
 import { renderProfile, renderFollowers, renderRepos, renderDetailSkeletons } from './ui.js';
-async function initDetails() {
+export async function initDetails() {
     const statusEl = document.querySelector('#detail-status');
     const params = new URLSearchParams(window.location.search);
     const username = params.get('username');
@@ -13,48 +13,72 @@ async function initDetails() {
         if (statusEl)
             statusEl.textContent = 'Loading user details...';
         renderDetailSkeletons();
-        // Parallel fetch returning ApiResult objects via ApiService instance
-        const [profileRes, followersRes, reposRes] = await Promise.all([
-            apiService.getUserProfile(username),
+        // STAGE 1: Validate Parent Entity First (User Profile)
+        const profileRes = await apiService.getUserProfile(username);
+        if (!profileRes.success) {
+            // Parent user does not exist (404/Error) -> Stop immediately & clear child skeleton lists
+            const profileCard = document.querySelector('#profile-card');
+            const followersList = document.querySelector('#followers-list');
+            const reposList = document.querySelector('#repos-list');
+            if (profileCard)
+                profileCard.innerHTML = `<p class="error">User profile for "@${username}" was not found.</p>`;
+            if (followersList)
+                followersList.innerHTML = '';
+            if (reposList)
+                reposList.innerHTML = '';
+            if (statusEl)
+                statusEl.textContent = '';
+            return;
+        }
+        // Render Profile Header since User Profile exists
+        renderProfile(profileRes.data);
+        // STAGE 2: User exists! Fetch Followers and Repos concurrently using Promise.allSettled
+        const [followersSettled, reposSettled] = await Promise.allSettled([
             apiService.getUserFollowers(username),
             apiService.getUserRepos(username)
         ]);
         if (statusEl)
-            statusEl.textContent = ''; // Clear status message
-        // Handle profile result
-        if (profileRes.success) {
-            renderProfile(profileRes.data);
+            statusEl.textContent = ''; // Clear loading status
+        // Handle Followers Settled Result (Isolated Failure)
+        if (followersSettled.status === 'fulfilled') {
+            const followersRes = followersSettled.value;
+            if (followersRes.success) {
+                renderFollowers(followersRes.data);
+            }
+            else {
+                console.error('Followers fetch error:', followersRes.error);
+                const followersList = document.querySelector('#followers-list');
+                if (followersList)
+                    followersList.textContent = 'Unable to load followers at this time.';
+            }
         }
         else {
-            const profileCard = document.querySelector('#profile-card');
-            if (profileCard)
-                profileCard.innerHTML = `<p class="error">Could not load profile: ${profileRes.error}</p>`;
+            console.error('Followers promise rejected:', followersSettled.reason);
+            const followersList = document.querySelector('#followers-list');
+            if (followersList)
+                followersList.textContent = 'Unable to load followers at this time.';
         }
-        // Handle followers result
-        if (followersRes.success) {
-            renderFollowers(followersRes.data);
+        // Handle Repositories Settled Result (Isolated Failure)
+        if (reposSettled.status === 'fulfilled') {
+            const reposRes = reposSettled.value;
+            if (reposRes.success) {
+                renderRepos(reposRes.data);
+            }
+            else {
+                console.error('Repositories fetch error:', reposRes.error);
+                const reposList = document.querySelector('#repos-list');
+                if (reposList)
+                    reposList.textContent = 'Unable to load repositories at this time.';
+            }
         }
         else {
-            renderFollowers([]);
-        }
-        // Handle repositories result
-        if (reposRes.success) {
-            renderRepos(reposRes.data);
-        }
-        else {
-            renderRepos([]);
+            console.error('Repositories promise rejected:', reposSettled.reason);
+            const reposList = document.querySelector('#repos-list');
+            if (reposList)
+                reposList.textContent = 'Unable to load repositories at this time.';
         }
     }
     catch (error) {
-        const profileCard = document.querySelector('#profile-card');
-        const followersList = document.querySelector('#followers-list');
-        const reposList = document.querySelector('#repos-list');
-        if (profileCard)
-            profileCard.innerHTML = '';
-        if (followersList)
-            followersList.innerHTML = '';
-        if (reposList)
-            reposList.innerHTML = '';
         const message = error instanceof Error ? error.message : 'Unknown error';
         if (statusEl)
             statusEl.textContent = `Could not load details: ${message}`;
