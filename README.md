@@ -490,3 +490,17 @@ const [followersSettled, reposSettled] = await Promise.allSettled([
 
 ---
 
+## 📌 Task 9: Improve Loading and Error Handling
+
+In Task 9, we updated application error propagation and UI loading state cleanup across `src/users.ts` and `src/details.ts`.
+
+### Concise Enhancements Made:
+
+1. **Guaranteed Status Cleanup (`finally` Block):**
+   In `src/details.ts`, status text cleanup (`statusEl.textContent = ''`) is wrapped inside a `finally` block to ensure `"Loading user details..."` is ALWAYS cleared when fetching completes, regardless of success, 404, or network error.
+
+2. **Developer Diagnostics (`console.error`):**
+   Added explicit `console.error()` logging on API failures to prevent errors from swallowing silently while keeping UI error messages friendly and non-technical.
+
+---
+

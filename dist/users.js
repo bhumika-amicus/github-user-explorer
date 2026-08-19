@@ -39,6 +39,7 @@ export async function loadUsers() {
         const result = await apiService.getUsers();
         // Check if API returned an error
         if (!result.success) {
+            console.error('getUsers API failure:', result.error);
             clearUserGrid();
             renderStatus(`Could not load users: ${result.error}`);
             return;
@@ -54,13 +55,13 @@ export async function loadUsers() {
         const totalPages = Math.ceil(displayedUsers.length / pageSize) || 1;
         currentPage = Math.min(page, totalPages);
         renderCurrentPage();
-        renderStatus('');
         const applyButton = document.querySelector('#apply-filter');
         if (applyButton) {
             applyButton.addEventListener('click', handleFilter);
         }
     }
     catch (error) {
+        console.error('Unexpected error in loadUsers:', error);
         clearUserGrid();
         const message = error instanceof Error ? error.message : 'Unknown error';
         renderStatus(`Could not load users: ${message}`);

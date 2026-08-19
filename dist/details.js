@@ -16,7 +16,7 @@ export async function initDetails() {
         // STAGE 1: Validate Parent Entity First (User Profile)
         const profileRes = await apiService.getUserProfile(username);
         if (!profileRes.success) {
-            // Parent user does not exist (404/Error) -> Stop immediately & clear child skeleton lists
+            console.error('User profile fetch error:', profileRes.error);
             const profileCard = document.querySelector('#profile-card');
             const followersList = document.querySelector('#followers-list');
             const reposList = document.querySelector('#repos-list');
@@ -26,8 +26,6 @@ export async function initDetails() {
                 followersList.innerHTML = '';
             if (reposList)
                 reposList.innerHTML = '';
-            if (statusEl)
-                statusEl.textContent = '';
             return;
         }
         // Render Profile Header since User Profile exists
@@ -37,8 +35,6 @@ export async function initDetails() {
             apiService.getUserFollowers(username),
             apiService.getUserRepos(username)
         ]);
-        if (statusEl)
-            statusEl.textContent = ''; // Clear loading status
         // Handle Followers Settled Result (Isolated Failure)
         if (followersSettled.status === 'fulfilled') {
             const followersRes = followersSettled.value;
@@ -79,9 +75,16 @@ export async function initDetails() {
         }
     }
     catch (error) {
+        console.error('Unexpected error in initDetails:', error);
         const message = error instanceof Error ? error.message : 'Unknown error';
         if (statusEl)
             statusEl.textContent = `Could not load details: ${message}`;
+    }
+    finally {
+        // Guaranteed status clearing on UI completion
+        if (statusEl && statusEl.textContent === 'Loading user details...') {
+            statusEl.textContent = '';
+        }
     }
 }
 document.addEventListener('DOMContentLoaded', initDetails);

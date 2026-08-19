@@ -19,7 +19,7 @@ export async function initDetails(): Promise<void> {
         const profileRes = await apiService.getUserProfile(username);
 
         if (!profileRes.success) {
-            // Parent user does not exist (404/Error) -> Stop immediately & clear child skeleton lists
+            console.error('User profile fetch error:', profileRes.error);
             const profileCard = document.querySelector('#profile-card');
             const followersList = document.querySelector('#followers-list');
             const reposList = document.querySelector('#repos-list');
@@ -27,7 +27,6 @@ export async function initDetails(): Promise<void> {
             if (profileCard) profileCard.innerHTML = `<p class="error">User profile for "@${username}" was not found.</p>`;
             if (followersList) followersList.innerHTML = '';
             if (reposList) reposList.innerHTML = '';
-            if (statusEl) statusEl.textContent = '';
             return;
         }
 
@@ -39,8 +38,6 @@ export async function initDetails(): Promise<void> {
             apiService.getUserFollowers(username),
             apiService.getUserRepos(username)
         ]);
-
-        if (statusEl) statusEl.textContent = ''; // Clear loading status
 
         // Handle Followers Settled Result (Isolated Failure)
         if (followersSettled.status === 'fulfilled') {
@@ -75,8 +72,14 @@ export async function initDetails(): Promise<void> {
         }
 
     } catch (error) {
+        console.error('Unexpected error in initDetails:', error);
         const message = error instanceof Error ? error.message : 'Unknown error';
         if (statusEl) statusEl.textContent = `Could not load details: ${message}`;
+    } finally {
+        // Guaranteed status clearing on UI completion
+        if (statusEl && statusEl.textContent === 'Loading user details...') {
+            statusEl.textContent = '';
+        }
     }
 }
 
