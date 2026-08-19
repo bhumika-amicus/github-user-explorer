@@ -74,6 +74,7 @@ github-user-explorer/
 ├── src/                   # TypeScript source code
 │   ├── api.ts
 │   ├── details.ts
+│   ├── types.ts           # Centralized TypeScript interfaces
 │   ├── ui.ts
 │   └── users.ts
 ├── screenshots/           # Application & compiler output screenshots
@@ -89,7 +90,7 @@ github-user-explorer/
 
 ---
 
-## 🚨 Migration Insights: Errors Caught by `tsc` (Task 1)
+## 📌 Task 1: Project Setup & TS Migration Insights
 
 When running `npx tsc` for the first time with `strict: true` and `noImplicitAny: true`, TypeScript pointed out **74 errors** across our JavaScript files. Here is what we learned from them:
 
@@ -119,5 +120,46 @@ When `npx tsc` was executed, the compiler evaluated all source files against str
 - **Why it matters:** Only `HTMLInputElement` has `.value`. We must cast DOM elements to their specific HTML types (e.g. `as HTMLInputElement`).
 
 ![DOM element casting error screenshot](./screenshots/task1_dom_type_error.png)
+
+---
+
+## 📌 Task 2: Data Interfaces & Types
+
+All API response shapes are centralized inside `src/types.ts` to ensure type safety across the entire application:
+
+### Interfaces Overview:
+- **`GitHubUser`**: Represents a user profile object returned by GitHub API (`/users` and `/users/{username}`). Includes nullable/optional fields like `name`, `bio`, and `followers`.
+- **`GitHubFollower`**: Represents a follower summary object (`login`, `id`, `avatar_url`, `html_url`).
+- **`GitHubRepo`**: Represents a repository summary object (`name`, `stargazers_count`, `description`, etc.).
+
+```typescript
+export interface GitHubUser {
+    login: string;
+    id: number;
+    avatar_url: string;
+    html_url: string;
+    name?: string | null;
+    public_repos?: number;
+    followers?: number;
+    following?: number;
+    bio?: string | null;
+}
+
+export interface GitHubFollower {
+    login: string;
+    id: number;
+    avatar_url: string;
+    html_url: string;
+}
+
+export interface GitHubRepo {
+    id: number;
+    name: string;
+    full_name: string;
+    html_url: string;
+    description: string | null;
+    stargazers_count: number;
+}
+```
 
 ---
