@@ -28,7 +28,7 @@ function parseStateFromUrl(): { minLength: number; page: number } {
     const pageParam = Number(params.get('page'));
 
     // Default minLength to 4 as specified in assignment requirements
-    const minLength = (!isNaN(minLenParam) && minLenParam >= 1) ? Math.floor(minLenParam) : 4;
+    const minLength = (!isNaN(minLenParam) && minLenParam >= 4) ? Math.floor(minLenParam) : 4;
     const page = (!isNaN(pageParam) && pageParam >= 1) ? Math.floor(pageParam) : 1;
 
     return { minLength, page };
