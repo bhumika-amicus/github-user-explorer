@@ -1,36 +1,41 @@
 import { GitHubUser, GitHubFollower, GitHubRepo, ApiResult } from './types.js';
 
-const BASE_URL = 'https://api.github.com';
+export class ApiService {
+    private baseUrl: string;
 
+    constructor(baseUrl: string = 'https://api.github.com') {
+        this.baseUrl = baseUrl;
+    }
 
-export async function safeHttpGet<T>(url: string): Promise<ApiResult<T>> {
-    try {
-        const response = await fetch(url);
-        if (!response.ok) {
-            return { success: false, error: `HTTP error! Status: ${response.status}` };
+    private async request<T>(endpoint: string): Promise<ApiResult<T>> {
+        try {
+            const response = await fetch(`${this.baseUrl}${endpoint}`);
+            if (!response.ok) {
+                return { success: false, error: `HTTP error! Status: ${response.status}` };
+            }
+            const data: T = await response.json();
+            return { success: true, data };
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : 'An unexpected network error occurred';
+            return { success: false, error: errorMessage };
         }
-        const data: T = await response.json();
-        return { success: true, data };
-    } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : 'An unexpected network error occurred';
-        return { success: false, error: errorMessage };
+    }
+
+    public async getUsers(): Promise<ApiResult<GitHubUser[]>> {
+        return this.request<GitHubUser[]>('/users');
+    }
+
+    public async getUserProfile(username: string): Promise<ApiResult<GitHubUser>> {
+        return this.request<GitHubUser>(`/users/${username}`);
+    }
+
+    public async getUserFollowers(username: string): Promise<ApiResult<GitHubFollower[]>> {
+        return this.request<GitHubFollower[]>(`/users/${username}/followers?per_page=5`);
+    }
+
+    public async getUserRepos(username: string): Promise<ApiResult<GitHubRepo[]>> {
+        return this.request<GitHubRepo[]>(`/users/${username}/repos?per_page=5`);
     }
 }
 
-
-//using helper to fetch
-export async function fetchUsers(): Promise<ApiResult<GitHubUser[]>> {
-    return await safeHttpGet<GitHubUser[]>(`${BASE_URL}/users`);
-}
-
-export async function fetchUserProfile(username: string): Promise<ApiResult<GitHubUser>> {
-    return await safeHttpGet<GitHubUser>(`${BASE_URL}/users/${username}`);
-}
-
-export async function fetchUserFollowers(username: string): Promise<ApiResult<GitHubFollower[]>> {
-    return await safeHttpGet<GitHubFollower[]>(`${BASE_URL}/users/${username}/followers?per_page=5`);
-}
-
-export async function fetchUserRepos(username: string): Promise<ApiResult<GitHubRepo[]>> {
-    return await safeHttpGet<GitHubRepo[]>(`${BASE_URL}/users/${username}/repos?per_page=5`);
-}
+export const apiService = new ApiService();

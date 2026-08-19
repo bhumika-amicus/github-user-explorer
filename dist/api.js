@@ -1,28 +1,32 @@
-const BASE_URL = 'https://api.github.com';
-export async function safeHttpGet(url) {
-    try {
-        const response = await fetch(url);
-        if (!response.ok) {
-            return { success: false, error: `HTTP error! Status: ${response.status}` };
+export class ApiService {
+    constructor(baseUrl = 'https://api.github.com') {
+        this.baseUrl = baseUrl;
+    }
+    async request(endpoint) {
+        try {
+            const response = await fetch(`${this.baseUrl}${endpoint}`);
+            if (!response.ok) {
+                return { success: false, error: `HTTP error! Status: ${response.status}` };
+            }
+            const data = await response.json();
+            return { success: true, data };
         }
-        const data = await response.json();
-        return { success: true, data };
+        catch (err) {
+            const errorMessage = err instanceof Error ? err.message : 'An unexpected network error occurred';
+            return { success: false, error: errorMessage };
+        }
     }
-    catch (err) {
-        const errorMessage = err instanceof Error ? err.message : 'An unexpected network error occurred';
-        return { success: false, error: errorMessage };
+    async getUsers() {
+        return this.request('/users');
+    }
+    async getUserProfile(username) {
+        return this.request(`/users/${username}`);
+    }
+    async getUserFollowers(username) {
+        return this.request(`/users/${username}/followers?per_page=5`);
+    }
+    async getUserRepos(username) {
+        return this.request(`/users/${username}/repos?per_page=5`);
     }
 }
-//using helper to fetch
-export async function fetchUsers() {
-    return await safeHttpGet(`${BASE_URL}/users`);
-}
-export async function fetchUserProfile(username) {
-    return await safeHttpGet(`${BASE_URL}/users/${username}`);
-}
-export async function fetchUserFollowers(username) {
-    return await safeHttpGet(`${BASE_URL}/users/${username}/followers?per_page=5`);
-}
-export async function fetchUserRepos(username) {
-    return await safeHttpGet(`${BASE_URL}/users/${username}/repos?per_page=5`);
-}
+export const apiService = new ApiService();

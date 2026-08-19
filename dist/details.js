@@ -1,4 +1,4 @@
-import { fetchUserProfile, fetchUserFollowers, fetchUserRepos } from './api.js';
+import { apiService } from './api.js';
 import { renderProfile, renderFollowers, renderRepos, renderDetailSkeletons } from './ui.js';
 async function initDetails() {
     const statusEl = document.querySelector('#detail-status');
@@ -13,11 +13,11 @@ async function initDetails() {
         if (statusEl)
             statusEl.textContent = 'Loading user details...';
         renderDetailSkeletons();
-        // Parallel fetch returning ApiResult objects
+        // Parallel fetch returning ApiResult objects via ApiService instance
         const [profileRes, followersRes, reposRes] = await Promise.all([
-            fetchUserProfile(username),
-            fetchUserFollowers(username),
-            fetchUserRepos(username)
+            apiService.getUserProfile(username),
+            apiService.getUserFollowers(username),
+            apiService.getUserRepos(username)
         ]);
         if (statusEl)
             statusEl.textContent = ''; // Clear status message

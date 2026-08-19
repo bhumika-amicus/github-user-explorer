@@ -72,7 +72,7 @@ github-user-explorer/
 │   ├── ui.js
 │   └── users.js
 ├── src/                   # TypeScript source code
-│   ├── api.ts             # Generic API helper and fetch functions
+│   ├── api.ts             # Typed ApiService class & singleton instance
 │   ├── details.ts
 │   ├── types.ts           # Centralized TypeScript interfaces & Union types
 │   ├── ui.ts
@@ -211,21 +211,15 @@ export type ApiResult<T> =
 
 #### 1. Earlier Helper (`httpGet` — Threw Raw Errors):
 ```typescript
-// Required try/catch blocks around every invocation to prevent app crashes
 export async function httpGet<T>(url: string): Promise<T> {
     const response = await fetch(url);
     if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
     return await response.json();
 }
-
-export async function fetchUsers(): Promise<GitHubUser[]> {
-    return await httpGet<GitHubUser[]>(`${BASE_URL}/users`);
-}
 ```
 
 #### 2. Updated Helper (`safeHttpGet` — Returns Typed Union Result):
 ```typescript
-// Catches network/HTTP errors and returns ApiResult<T>
 export async function safeHttpGet<T>(url: string): Promise<ApiResult<T>> {
     try {
         const response = await fetch(url);
@@ -239,10 +233,6 @@ export async function safeHttpGet<T>(url: string): Promise<ApiResult<T>> {
         return { success: false, error: errorMessage };
     }
 }
-
-export async function fetchUsers(): Promise<ApiResult<GitHubUser[]>> {
-    return await safeHttpGet<GitHubUser[]>(`${BASE_URL}/users`);
-}
 ```
 
 ### Application Logic Migration (`src/users.ts` & `src/details.ts`):
@@ -250,7 +240,6 @@ export async function fetchUsers(): Promise<ApiResult<GitHubUser[]>> {
 #### 1. Old Application Code (Broken when `ApiResult` introduced):
 Previously, callers assumed `fetchUsers()` returned a raw array directly:
 ```typescript
-// Previously: fetchUsers() returned a raw array
 const rawUsers = await fetchUsers();
 allUsers = transformUsers(rawUsers); // Called rawUsers.map() directly
 ```
@@ -259,7 +248,6 @@ allUsers = transformUsers(rawUsers); // Called rawUsers.map() directly
 #### 2. New Application Code (Safe `ApiResult` Handling in `src/users.ts`):
 Callers now check `result.success` before extracting `result.data`:
 ```typescript
-// Now: fetchUsers() returns ApiResult<GitHubUser[]>
 const result = await fetchUsers();
 
 if (!result.success) {
@@ -272,34 +260,124 @@ allUsers = transformUsers(result.data);
 ```
 
 #### 3. Parallel API Fetching & Type Narrowing (`src/details.ts`):
-Similarly, `src/details.ts` was updated to unpack `ApiResult` objects returned by parallel `Promise.all` requests (`fetchUserProfile`, `fetchUserFollowers`, `fetchUserRepos`), allowing each section to render independently with type narrowing:
+Similarly, `src/details.ts` was updated to unpack `ApiResult` objects returned by parallel `Promise.all` requests (`fetchUserProfile`, `fetchUserFollowers`, `fetchUserRepos`):
 
 ```typescript
-// Promise.all returns [ApiResult<GitHubUser>, ApiResult<GitHubFollower[]>, ApiResult<GitHubRepo[]>]
 const [profileRes, followersRes, reposRes] = await Promise.all([
     fetchUserProfile(username),
     fetchUserFollowers(username),
     fetchUserRepos(username)
 ]);
 
-// Type-narrowing profile result
 if (profileRes.success) {
-    renderProfile(profileRes.data); // Type-narrowed to GitHubUser
+    renderProfile(profileRes.data);
 }
 
-// Type-narrowing followers result (Graceful fallback)
 if (followersRes.success) {
-    renderFollowers(followersRes.data); // Type-narrowed to GitHubFollower[]
+    renderFollowers(followersRes.data);
 } else {
     renderFollowers([]);
 }
 
-// Type-narrowing repos result (Graceful fallback)
 if (reposRes.success) {
-    renderRepos(reposRes.data); // Type-narrowed to GitHubRepo[]
+    renderRepos(reposRes.data);
 } else {
     renderRepos([]);
 }
 ```
+
+---
+
+## 📌 Task 5: Typed `ApiService` Class
+
+To transition from procedural standalone functions to Object-Oriented Architecture, all API logic was refactored into an `ApiService` class inside `src/api.ts`.
+
+### Before vs After Refactoring:
+
+#### 1. Before (Task 4 Standalone Exported Functions):
+```typescript
+// Standalone functions with no state encapsulation
+export async function fetchUsers(): Promise<ApiResult<GitHubUser[]>> {
+    return await safeHttpGet<GitHubUser[]>(`${BASE_URL}/users`);
+}
+```
+
+#### 2. After (Task 5 Encapsulated `ApiService` Class):
+```typescript
+import { GitHubUser, GitHubFollower, GitHubRepo, ApiResult } from './types.js';
+
+export class ApiService {
+    // 1. Encapsulated State
+    private baseUrl: string;
+
+    // 2. Dependency Injection Constructor
+    constructor(baseUrl: string = 'https://api.github.com') {
+        this.baseUrl = baseUrl;
+    }
+
+    // 3. Encapsulated Private Generic Request Engine
+    private async request<T>(endpoint: string): Promise<ApiResult<T>> {
+        try {
+            const response = await fetch(`${this.baseUrl}${endpoint}`);
+            if (!response.ok) {
+                return { success: false, error: `HTTP error! Status: ${response.status}` };
+            }
+            const data: T = await response.json();
+            return { success: true, data };
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : 'An unexpected network error occurred';
+            return { success: false, error: errorMessage };
+        }
+    }
+
+    // 4. Public Service Proxy Methods
+    public async getUsers(): Promise<ApiResult<GitHubUser[]>> {
+        return this.request<GitHubUser[]>('/users');
+    }
+
+    public async getUserProfile(username: string): Promise<ApiResult<GitHubUser>> {
+        return this.request<GitHubUser>(`/users/${username}`);
+    }
+
+    public async getUserFollowers(username: string): Promise<ApiResult<GitHubFollower[]>> {
+        return this.request<GitHubFollower[]>(`/users/${username}/followers?per_page=5`);
+    }
+
+    public async getUserRepos(username: string): Promise<ApiResult<GitHubRepo[]>> {
+        return this.request<GitHubRepo[]>(`/users/${username}/repos?per_page=5`);
+    }
+}
+
+// 5. Singleton Export
+export const apiService = new ApiService();
+```
+
+### Key Architectural Concepts Applied:
+
+1. **Encapsulation (`private` visibility):**
+   - `private baseUrl` and `private request<T>()` hide raw HTTP fetching logic behind the class boundary.
+   - Outside code in `users.ts` or `details.ts` cannot access `private request`, forcing all callers to use safe public methods (`getUsers()`, `getUserProfile()`).
+
+2. **Dependency Injection (`constructor`):**
+   - `constructor(baseUrl: string = 'https://api.github.com')` allows passing alternative API URLs for staging, testing, or mock servers (`new ApiService('http://localhost:4000')`) without modifying class internals.
+
+3. **Singleton Pattern (`export const apiService`):**
+   - Exporting a single instance `apiService = new ApiService()` ensures that all application controllers (`src/users.ts` and `src/details.ts`) share the exact same instantiated service object in memory.
+
+### Application Usage Migration:
+- **In `src/users.ts`:**
+  ```typescript
+  import { apiService } from './api.js';
+  const result = await apiService.getUsers();
+  ```
+- **In `src/details.ts`:**
+  ```typescript
+  import { apiService } from './api.js';
+  const [profileRes, followersRes, reposRes] = await Promise.all([
+      apiService.getUserProfile(username),
+      apiService.getUserFollowers(username),
+      apiService.getUserRepos(username)
+  ]);
+  ```
 
 ---

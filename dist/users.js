@@ -1,4 +1,4 @@
-import { fetchUsers } from './api.js';
+import { apiService } from './api.js';
 import { renderUsers, renderStatus, renderUserCount, renderPagination, renderSkeletons } from './ui.js';
 let allUsers = [];
 let displayedUsers = [];
@@ -28,7 +28,7 @@ function parseStateFromUrl() {
 export async function loadUsers() {
     try {
         renderSkeletons(9);
-        const result = await fetchUsers();
+        const result = await apiService.getUsers();
         // Check if API returned an error
         if (!result.success) {
             const container = document.querySelector('#users-container');
