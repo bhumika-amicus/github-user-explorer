@@ -12,10 +12,10 @@ export function transformUsers(rawUsers) {
     }));
 }
 function updateUrlParams(minLen, page) {
-    const url = new URL(window.location);
-    url.searchParams.set('minLen', minLen);
-    url.searchParams.set('page', page);
-    window.history.pushState({}, '', url);
+    const url = new URL(window.location.href);
+    url.searchParams.set('minLen', String(minLen));
+    url.searchParams.set('page', String(page));
+    window.history.pushState({}, '', url.toString());
 }
 function parseStateFromUrl() {
     const params = new URLSearchParams(window.location.search);
@@ -71,7 +71,7 @@ window.addEventListener('popstate', () => {
     const { minLength, page } = parseStateFromUrl();
     const minLengthInput = document.querySelector('#min-login-length');
     if (minLengthInput) {
-        minLengthInput.value = minLength;
+        minLengthInput.value = String(minLength);
     }
     displayedUsers = allUsers.filter(user => user.login.length >= minLength);
     const totalPages = Math.ceil(displayedUsers.length / pageSize) || 1;
@@ -82,7 +82,7 @@ window.addEventListener('popstate', () => {
 function handleFilter() {
     const minLengthInput = document.querySelector('#min-login-length');
     const rawVal = minLengthInput ? minLengthInput.value.trim() : '';
-    if (rawVal === '' || isNaN(rawVal)) {
+    if (rawVal === '' || isNaN(Number(rawVal))) {
         renderStatus('Please enter a valid positive number for minimum login length.');
         return;
     }
@@ -109,7 +109,10 @@ function renderCurrentPage() {
     renderPagination(totalPages, currentPage);
 }
 function handlePaginationClick(event) {
-    const targetPage = event.target.dataset.page;
+    const target = event.target;
+    if (!target)
+        return;
+    const targetPage = target.dataset.page;
     if (!targetPage)
         return; // Clicked outside a button, ignore
     currentPage = Number(targetPage);
@@ -118,4 +121,7 @@ function handlePaginationClick(event) {
     updateUrlParams(minLength, currentPage);
     renderCurrentPage();
 }
-document.querySelector('#pagination').addEventListener('click', handlePaginationClick);
+const paginationNav = document.querySelector('#pagination');
+if (paginationNav) {
+    paginationNav.addEventListener('click', handlePaginationClick);
+}

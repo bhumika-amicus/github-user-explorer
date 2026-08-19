@@ -73,10 +73,10 @@ github-user-explorer/
 │   └── users.js
 ├── src/                   # TypeScript source code
 │   ├── api.ts             # Typed ApiService class & singleton instance
-│   ├── details.ts
+│   ├── details.ts         # User details controller
 │   ├── types.ts           # Centralized TypeScript interfaces & Union types
-│   ├── ui.ts
-│   └── users.ts
+│   ├── ui.ts              # Strongly-typed DOM rendering module
+│   └── users.ts           # Users dashboard controller & state manager
 ├── screenshots/           # Application & compiler output screenshots
 │   └── .gitkeep
 ├── css/
@@ -131,6 +131,7 @@ All API response shapes are centralized inside `src/types.ts` to ensure type saf
 - **`GitHubUser`**: Represents a user profile object returned by GitHub API (`/users` and `/users/{username}`). Includes nullable/optional fields like `name`, `bio`, and `followers`.
 - **`GitHubFollower`**: Represents a follower summary object (`login`, `id`, `avatar_url`, `html_url`).
 - **`GitHubRepo`**: Represents a repository summary object (`name`, `stargazers_count`, `description`, etc.).
+- **`TransformedUser`**: Represents the simplified user object used by the user card UI.
 
 ```typescript
 export interface GitHubUser {
@@ -159,6 +160,12 @@ export interface GitHubRepo {
     html_url: string;
     description: string | null;
     stargazers_count: number;
+}
+
+export interface TransformedUser {
+    login: string;
+    id: number;
+    avatar: string;
 }
 ```
 
@@ -379,5 +386,52 @@ export const apiService = new ApiService();
       apiService.getUserRepos(username)
   ]);
   ```
+
+---
+
+## 📌 Task 6: Typed DOM Elements, Application State & Event Handlers
+
+In Task 6, we eliminated all implicit `any` types and unsafe DOM property accesses across `src/ui.ts` and `src/users.ts`.
+
+### 1. Specific DOM Element Type Assertions
+Instead of working with generic `Element` return types, DOM selections are cast to their specific HTML interfaces:
+- **`HTMLInputElement`**: Enables safe access to `.value` (e.g. `document.querySelector('#min-login-length') as HTMLInputElement`).
+- **`HTMLTemplateElement`**: Enables access to `.content` (e.g. `document.querySelector('#user-card-template') as HTMLTemplateElement`).
+- **`HTMLImageElement` & `HTMLAnchorElement`**: Enables typed access to `.src`, `.alt`, `.href`.
+
+### 2. Strict Null Safety & Type Guards
+Every DOM query is guarded with null safety checks before property dereferencing:
+```typescript
+const container = document.querySelector('#users-container');
+const template = document.querySelector('#user-card-template') as HTMLTemplateElement | null;
+
+if (!container || !template) return; // Null guard prevents runtime crashes
+```
+
+### 3. Application State Typing (`src/users.ts`)
+All global state variables were given explicit type annotations:
+```typescript
+let allUsers: TransformedUser[] = [];
+let displayedUsers: TransformedUser[] = [];
+let currentPage: number = 1;
+const pageSize: number = 9;
+```
+
+### 4. Typed Event Handlers
+Event listener callbacks and event targets are explicitly typed:
+```typescript
+function handlePaginationClick(event: Event): void {
+    const target = event.target as HTMLElement | null;
+    if (!target) return;
+
+    const targetPage = target.dataset.page;
+    if (!targetPage) return;
+
+    currentPage = Number(targetPage);
+}
+```
+
+### 🏆 Compilation Milestone:
+Running `npx tsc` now completes with **0 errors** across the entire codebase!
 
 ---

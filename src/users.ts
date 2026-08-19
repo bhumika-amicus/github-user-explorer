@@ -1,12 +1,13 @@
 import { apiService } from './api.js';
 import { renderUsers, renderStatus, renderUserCount, renderPagination, renderSkeletons } from './ui.js';
+import { GitHubUser, TransformedUser } from './types.js';
 
-let allUsers = [];
-let displayedUsers = [];
-let currentPage = 1;
-const pageSize = 9;
+let allUsers: TransformedUser[] = [];
+let displayedUsers: TransformedUser[] = [];
+let currentPage: number = 1;
+const pageSize: number = 9;
 
-export function transformUsers(rawUsers) {
+export function transformUsers(rawUsers: GitHubUser[]): TransformedUser[] {
     return rawUsers.map(({ login, id, avatar_url }) => ({
         login,
         id,
@@ -14,14 +15,14 @@ export function transformUsers(rawUsers) {
     }));
 }
 
-function updateUrlParams(minLen, page) {
-    const url = new URL(window.location);
-    url.searchParams.set('minLen', minLen);
-    url.searchParams.set('page', page);
-    window.history.pushState({}, '', url);
+function updateUrlParams(minLen: number, page: number): void {
+    const url = new URL(window.location.href);
+    url.searchParams.set('minLen', String(minLen));
+    url.searchParams.set('page', String(page));
+    window.history.pushState({}, '', url.toString());
 }
 
-function parseStateFromUrl() {
+function parseStateFromUrl(): { minLength: number; page: number } {
     const params = new URLSearchParams(window.location.search);
     const minLenParam = Number(params.get('minLen'));
     const pageParam = Number(params.get('page'));
@@ -31,7 +32,8 @@ function parseStateFromUrl() {
 
     return { minLength, page };
 }
-export async function loadUsers() {
+
+export async function loadUsers(): Promise<void> {
     try {
         renderSkeletons(9);
         const result = await apiService.getUsers();
@@ -80,9 +82,9 @@ document.addEventListener('DOMContentLoaded', loadUsers);
 window.addEventListener('popstate', () => {
     if (allUsers.length === 0) return;
     const { minLength, page } = parseStateFromUrl();
-    const minLengthInput = document.querySelector('#min-login-length');
+    const minLengthInput = document.querySelector('#min-login-length') as HTMLInputElement | null;
     if (minLengthInput) {
-        minLengthInput.value = minLength;
+        minLengthInput.value = String(minLength);
     }
     displayedUsers = allUsers.filter(user => user.login.length >= minLength);
     const totalPages = Math.ceil(displayedUsers.length / pageSize) || 1;
@@ -91,11 +93,11 @@ window.addEventListener('popstate', () => {
     renderCurrentPage();
 });
 
-function handleFilter() {
-    const minLengthInput = document.querySelector('#min-login-length');
+function handleFilter(): void {
+    const minLengthInput = document.querySelector('#min-login-length') as HTMLInputElement | null;
     const rawVal = minLengthInput ? minLengthInput.value.trim() : '';
 
-    if (rawVal === '' || isNaN(rawVal)) {
+    if (rawVal === '' || isNaN(Number(rawVal))) {
         renderStatus('Please enter a valid positive number for minimum login length.');
         return;
     }
@@ -113,7 +115,7 @@ function handleFilter() {
     renderCurrentPage();
 }
 
-function renderCurrentPage() {
+function renderCurrentPage(): void {
     const totalPages = Math.ceil(displayedUsers.length / pageSize) || 1;
 
     // Calculate start and end index for slice
@@ -127,16 +129,23 @@ function renderCurrentPage() {
     renderPagination(totalPages, currentPage);
 }
 
-function handlePaginationClick(event) {
-    const targetPage = event.target.dataset.page;
+function handlePaginationClick(event: Event): void {
+    const target = event.target as HTMLElement | null;
+    if (!target) return;
+
+    const targetPage = target.dataset.page;
     if (!targetPage) return; // Clicked outside a button, ignore
+
     currentPage = Number(targetPage);
 
-    const minLengthInput = document.querySelector('#min-login-length');
+    const minLengthInput = document.querySelector('#min-login-length') as HTMLInputElement | null;
     const minLength = minLengthInput ? Number(minLengthInput.value) || 4 : 4;
 
     updateUrlParams(minLength, currentPage);
     renderCurrentPage();
 }
 
-document.querySelector('#pagination').addEventListener('click', handlePaginationClick);
+const paginationNav = document.querySelector('#pagination');
+if (paginationNav) {
+    paginationNav.addEventListener('click', handlePaginationClick);
+}

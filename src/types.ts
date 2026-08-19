@@ -34,3 +34,10 @@ export interface GitHubRepo {
 export type ApiResult<T> =
     | { success: true; data: T }
     | { success: false; error: string };
+
+// Transformed User for User Card UI display
+export interface TransformedUser {
+    login: string;
+    id: number;
+    avatar: string;
+}

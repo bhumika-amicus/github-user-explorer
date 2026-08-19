@@ -1,7 +1,10 @@
+import { GitHubUser, GitHubFollower, GitHubRepo, TransformedUser } from './types.js';
 
-export function renderUsers(users) {
+export function renderUsers(users: TransformedUser[]): void {
     const container = document.querySelector('#users-container');
-    const template = document.querySelector('#user-card-template');
+    const template = document.querySelector('#user-card-template') as HTMLTemplateElement | null;
+
+    if (!container || !template) return;
 
     container.innerHTML = ''; // Clear existing cards
 
@@ -11,68 +14,84 @@ export function renderUsers(users) {
     }
 
     users.forEach(user => {
-        const clone = template.content.cloneNode(true);
+        const clone = template.content.cloneNode(true) as DocumentFragment;
 
-        const img = clone.querySelector('.avatar');
-        img.src = user.avatar || user.avatar_url;
-        img.alt = `${user.login}'s avatar`;
+        const img = clone.querySelector('.avatar') as HTMLImageElement | null;
+        if (img) {
+            img.src = user.avatar;
+            img.alt = `${user.login}'s avatar`;
+        }
 
         const loginHeading = clone.querySelector('.login');
-        loginHeading.textContent = user.login;
+        if (loginHeading) {
+            loginHeading.textContent = user.login;
+        }
 
         const idBadge = clone.querySelector('.id-badge');
-        idBadge.textContent = `${user.id}`;
+        if (idBadge) {
+            idBadge.textContent = `${user.id}`;
+        }
 
-        const detailsLink = clone.querySelector('.details-link');
-        detailsLink.href = `details.html?username=${user.login}`;
+        const detailsLink = clone.querySelector('.details-link') as HTMLAnchorElement | null;
+        if (detailsLink) {
+            detailsLink.href = `details.html?username=${user.login}`;
+        }
 
         container.appendChild(clone);
     });
 }
 
-export function renderStatus(message = '') {
+export function renderStatus(message: string = ''): void {
     const statusEl = document.querySelector('#status');
-    statusEl.textContent = message;
+    if (statusEl) {
+        statusEl.textContent = message;
+    }
 }
 
-
-export function renderUserCount(count) {
+export function renderUserCount(count: number): void {
     const countEl = document.querySelector('#user-count');
-    countEl.textContent = `Showing ${count} users`;
+    if (countEl) {
+        countEl.textContent = `Showing ${count} users`;
+    }
 }
 
-
-export function renderPagination(totalPages, currentPage) {
+export function renderPagination(totalPages: number, currentPage: number): void {
     const nav = document.querySelector('#pagination');
+    if (!nav) return;
+
     nav.innerHTML = ''; // Clear old buttons
     if (totalPages <= 1) return; // Don't show pagination if only 1 page
+
     // Previous Button
     const prevBtn = document.createElement('button');
     prevBtn.textContent = 'Prev';
     prevBtn.disabled = currentPage === 1;
-    prevBtn.dataset.page = currentPage - 1;
+    prevBtn.dataset.page = String(currentPage - 1);
     nav.appendChild(prevBtn);
+
     // Page Number Buttons
     for (let i = 1; i <= totalPages; i++) {
         const btn = document.createElement('button');
-        btn.textContent = i;
+        btn.textContent = String(i);
         if (i === currentPage) {
             btn.classList.add('primary'); // Styled as active page
         }
-        btn.dataset.page = i;
+        btn.dataset.page = String(i);
         nav.appendChild(btn);
     }
+
     // Next Button
     const nextBtn = document.createElement('button');
     nextBtn.textContent = 'Next';
     nextBtn.disabled = currentPage === totalPages;
-    nextBtn.dataset.page = currentPage + 1;
+    nextBtn.dataset.page = String(currentPage + 1);
     nav.appendChild(nextBtn);
 }
 
-
-export function renderSkeletons(count = 9) {
+export function renderSkeletons(count: number = 9): void {
     const container = document.querySelector('#users-container');
+    if (!container) return;
+
     container.innerHTML = ''; // Clear container
 
     for (let i = 0; i < count; i++) {
@@ -89,102 +108,140 @@ export function renderSkeletons(count = 9) {
     }
 }
 
-
-
-export function renderProfile(profile) {
+export function renderProfile(profile: GitHubUser): void {
     const profileCard = document.querySelector('#profile-card');
-    const template = document.querySelector('#profile-template');
+    const template = document.querySelector('#profile-template') as HTMLTemplateElement | null;
 
-    const clone = template.content.cloneNode(true);
+    if (!profileCard || !template) return;
 
-    const img = clone.querySelector('.profile-avatar');
-    img.src = profile.avatar_url;
-    img.alt = `${profile.login}'s avatar`;
+    const clone = template.content.cloneNode(true) as DocumentFragment;
 
-    clone.querySelector('.profile-name').textContent = profile.name || profile.login;
-    clone.querySelector('.profile-handle').textContent = `@${profile.login} • ID: ${profile.id}`;
-    clone.querySelector('.profile-bio').textContent = profile.bio || 'No bio available';
-    clone.querySelector('.profile-repos-count').textContent = profile.public_repos;
-    clone.querySelector('.profile-followers-count').textContent = profile.followers;
-    clone.querySelector('.profile-following-count').textContent = profile.following;
+    const img = clone.querySelector('.profile-avatar') as HTMLImageElement | null;
+    if (img) {
+        img.src = profile.avatar_url;
+        img.alt = `${profile.login}'s avatar`;
+    }
+
+    const nameEl = clone.querySelector('.profile-name');
+    if (nameEl) nameEl.textContent = profile.name || profile.login;
+
+    const handleEl = clone.querySelector('.profile-handle');
+    if (handleEl) handleEl.textContent = `@${profile.login} • ID: ${profile.id}`;
+
+    const bioEl = clone.querySelector('.profile-bio');
+    if (bioEl) bioEl.textContent = profile.bio || 'No bio available';
+
+    const reposEl = clone.querySelector('.profile-repos-count');
+    if (reposEl) reposEl.textContent = String(profile.public_repos ?? 0);
+
+    const followersEl = clone.querySelector('.profile-followers-count');
+    if (followersEl) followersEl.textContent = String(profile.followers ?? 0);
+
+    const followingEl = clone.querySelector('.profile-following-count');
+    if (followingEl) followingEl.textContent = String(profile.following ?? 0);
 
     profileCard.innerHTML = ''; // Clears skeleton HTML
     profileCard.appendChild(clone);
 }
 
-
-
-export function renderFollowers(followers) {
+export function renderFollowers(followers: GitHubFollower[]): void {
     const container = document.querySelector('#followers-list');
-    const template = document.querySelector('#follower-item-template');
+    const template = document.querySelector('#follower-item-template') as HTMLTemplateElement | null;
+
+    if (!container || !template) return;
+
     container.innerHTML = '';
     if (followers.length === 0) {
         container.textContent = 'No followers found.';
         return;
     }
+
     followers.forEach(follower => {
-        const clone = template.content.cloneNode(true);
-        const img = clone.querySelector('.follower-avatar');
-        img.src = follower.avatar_url;
-        img.alt = `${follower.login}'s avatar`;
-        const link = clone.querySelector('.follower-link');
-        link.href = `details.html?username=${follower.login}`;
-        link.textContent = follower.login;
+        const clone = template.content.cloneNode(true) as DocumentFragment;
+
+        const img = clone.querySelector('.follower-avatar') as HTMLImageElement | null;
+        if (img) {
+            img.src = follower.avatar_url;
+            img.alt = `${follower.login}'s avatar`;
+        }
+
+        const link = clone.querySelector('.follower-link') as HTMLAnchorElement | null;
+        if (link) {
+            link.href = `details.html?username=${follower.login}`;
+            link.textContent = follower.login;
+        }
+
         container.appendChild(clone);
     });
 }
 
-export function renderRepos(repos) {
+export function renderRepos(repos: GitHubRepo[]): void {
     const container = document.querySelector('#repos-list');
-    const template = document.querySelector('#repo-item-template');
+    const template = document.querySelector('#repo-item-template') as HTMLTemplateElement | null;
+
+    if (!container || !template) return;
+
     container.innerHTML = '';
     if (repos.length === 0) {
         container.textContent = 'No public repositories found.';
         return;
     }
+
     repos.forEach(repo => {
-        const clone = template.content.cloneNode(true);
-        const link = clone.querySelector('.repo-link');
-        link.href = repo.html_url;
-        link.textContent = repo.name;
+        const clone = template.content.cloneNode(true) as DocumentFragment;
+
+        const link = clone.querySelector('.repo-link') as HTMLAnchorElement | null;
+        if (link) {
+            link.href = repo.html_url;
+            link.textContent = repo.name;
+        }
+
         const stars = clone.querySelector('.repo-stars');
-        stars.textContent = `⭐ ${repo.stargazers_count}`;
+        if (stars) {
+            stars.textContent = `⭐ ${repo.stargazers_count}`;
+        }
+
         const desc = clone.querySelector('.repo-desc');
-        desc.textContent = repo.description || 'No description provided';
+        if (desc) {
+            desc.textContent = repo.description || 'No description provided';
+        }
+
         container.appendChild(clone);
     });
 }
 
-
-export function renderDetailSkeletons() {
-
+export function renderDetailSkeletons(): void {
     const profileCard = document.querySelector('#profile-card');
-    profileCard.innerHTML = `
-        <div class="profile-header">
-            <div class="skeleton-avatar" style="width: 80px; height: 80px;"></div>
-            <div class="skeleton-text" style="flex: 1;">
-                <div class="skeleton-line medium"></div>
-                <div class="skeleton-line short"></div>
-                <div class="skeleton-line short"></div>
+    if (profileCard) {
+        profileCard.innerHTML = `
+            <div class="profile-header">
+                <div class="skeleton-avatar" style="width: 80px; height: 80px;"></div>
+                <div class="skeleton-text" style="flex: 1;">
+                    <div class="skeleton-line medium"></div>
+                    <div class="skeleton-line short"></div>
+                    <div class="skeleton-line short"></div>
+                </div>
             </div>
-        </div>
-    `;
-
+        `;
+    }
 
     const followersList = document.querySelector('#followers-list');
-    followersList.innerHTML = Array(5).fill(`
-        <div style="display: flex; align-items: center; gap: 10px; padding: 8px 0;">
-            <div class="skeleton-avatar" style="width: 32px; height: 32px;"></div>
-            <div class="skeleton-line short" style="margin: 0; width: 120px;"></div>
-        </div>
-    `).join('');
-
+    if (followersList) {
+        followersList.innerHTML = Array(5).fill(`
+            <div style="display: flex; align-items: center; gap: 10px; padding: 8px 0;">
+                <div class="skeleton-avatar" style="width: 32px; height: 32px;"></div>
+                <div class="skeleton-line short" style="margin: 0; width: 120px;"></div>
+            </div>
+        `).join('');
+    }
 
     const reposList = document.querySelector('#repos-list');
-    reposList.innerHTML = Array(5).fill(`
-        <div style="padding: 10px 0; border-bottom: 1px solid var(--border-color);">
-            <div class="skeleton-line medium" style="margin-bottom: 6px;"></div>
-            <div class="skeleton-line short" style="margin: 0;"></div>
-        </div>
-    `).join('');
+    if (reposList) {
+        reposList.innerHTML = Array(5).fill(`
+            <div style="padding: 10px 0; border-bottom: 1px solid var(--border-color);">
+                <div class="skeleton-line medium" style="margin-bottom: 6px;"></div>
+                <div class="skeleton-line short" style="margin: 0;"></div>
+            </div>
+        `).join('');
+    }
 }
