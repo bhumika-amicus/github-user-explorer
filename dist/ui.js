@@ -38,8 +38,13 @@ export function renderStatus(message = '') {
 }
 export function renderUserCount(count) {
     const countEl = document.querySelector('#user-count');
-    if (countEl) {
-        countEl.textContent = `Showing ${count} users`;
+    if (!countEl)
+        return;
+    if (count === 0) {
+        countEl.textContent = '';
+    }
+    else {
+        countEl.textContent = `${count} users match your filter criteria`;
     }
 }
 export function renderPagination(totalPages, currentPage) {
