@@ -1,29 +1,33 @@
+import { GitHubUser, GitHubFollower, GitHubRepo } from './types.js';
+
 const BASE_URL = 'https://api.github.com';
 
-export async function fetchUsers() {
-    const response = await fetch(`${BASE_URL}/users`);
+
+//generic helper function export async function httpGet<T>(url: string): Promise<T> {
+export async function httpGet<T>(url: string): Promise<T> {
+    const response = await fetch(url);
 
     if (!response.ok) {
-        throw new Error(`Failed to fetch users (Status: ${response.status})`);
+        throw new Error(`HTTP error! Status: ${response.status}`);
     }
 
-    return await response.json();
+    const data: T = await response.json();
+    return data;
 }
 
-export async function fetchUserProfile(username) {
-    const response = await fetch(`${BASE_URL}/users/${username}`);
-    if (!response.ok) throw new Error(`User profile not found (${response.status})`);
-    return await response.json();
+//using helper to fetch
+export async function fetchUsers(): Promise<GitHubUser[]> {
+    return await httpGet<GitHubUser[]>(`${BASE_URL}/users`);
 }
 
-export async function fetchUserFollowers(username) {
-    const response = await fetch(`${BASE_URL}/users/${username}/followers?per_page=5`);
-    if (!response.ok) throw new Error(`Could not fetch followers (${response.status})`);
-    return await response.json();
+export async function fetchUserProfile(username: string): Promise<GitHubUser> {
+    return await httpGet<GitHubUser>(`${BASE_URL}/users/${username}`);
 }
 
-export async function fetchUserRepos(username) {
-    const response = await fetch(`${BASE_URL}/users/${username}/repos?per_page=5`);
-    if (!response.ok) throw new Error(`Could not fetch repositories (${response.status})`);
-    return await response.json();
+export async function fetchUserFollowers(username: string): Promise<GitHubFollower[]> {
+    return await httpGet<GitHubFollower[]>(`${BASE_URL}/users/${username}/followers?per_page=5`);
+}
+
+export async function fetchUserRepos(username: string): Promise<GitHubRepo[]> {
+    return await httpGet<GitHubRepo[]>(`${BASE_URL}/users/${username}/repos?per_page=5`);
 }

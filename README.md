@@ -72,7 +72,7 @@ github-user-explorer/
 │   ├── ui.js
 │   └── users.js
 ├── src/                   # TypeScript source code
-│   ├── api.ts
+│   ├── api.ts             # Generic API helper and fetch functions
 │   ├── details.ts
 │   ├── types.ts           # Centralized TypeScript interfaces
 │   ├── ui.ts
@@ -159,6 +159,46 @@ export interface GitHubRepo {
     html_url: string;
     description: string | null;
     stargazers_count: number;
+}
+```
+
+---
+
+## 📌 Task 3: Generic API Helper (`httpGet<T>`)
+
+To eliminate code duplication across API calls, we implemented a generic API helper function `httpGet<T>` inside `src/api.ts`.
+
+*(Note: The example below shows how `fetchUsers()` was refactored. The exact same generic helper pattern was applied to `fetchUserProfile()`, `fetchUserFollowers()`, and `fetchUserRepos()`)*
+
+### Before vs After Refactoring:
+
+#### 1. Before (Plain JS — Repetitive Error Handling & Untyped):
+```javascript
+export async function fetchUsers() {
+    const response = await fetch(`${BASE_URL}/users`);
+    if (!response.ok) {
+        throw new Error(`Failed to fetch users (Status: ${response.status})`);
+    }
+    return await response.json();
+}
+```
+
+#### 2. Generic Helper Definition (`httpGet<T>`):
+```typescript
+export async function httpGet<T>(url: string): Promise<T> {
+    const response = await fetch(url);
+    if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+    const data: T = await response.json();
+    return data;
+}
+```
+
+#### 3. After (Clean, Reusable & Strongly Typed with Generics):
+```typescript
+export async function fetchUsers(): Promise<GitHubUser[]> {
+    return await httpGet<GitHubUser[]>(`${BASE_URL}/users`);
 }
 ```
 
