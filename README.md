@@ -504,3 +504,19 @@ In Task 9, we updated application error propagation and UI loading state cleanup
 
 ---
 
+## 📌 Task 10: Use Composition Instead of Inheritance
+
+Instead of rigid class inheritance (`extends`), the application architecture is built using **Object Composition** and the **Single Responsibility Principle (SRP)**.
+
+### Module Responsibilities Breakdown:
+
+1. **API Service (`src/api.ts`):** Handles HTTP network fetching, `baseUrl` configuration, and returning `ApiResult<T>`. Contains zero DOM or HTML logic.
+2. **UI & Formatting Module (`src/ui.ts`):** Handles DOM selections, card template cloning, and status rendering. Contains zero network or `fetch` logic.
+3. **Application Controllers (`src/users.ts` & `src/details.ts`):** Composes `apiService` and `ui` rendering functions together to orchestrate page state and application flow.
+
+### Architectural Benefits of Composition:
+- **Loose Coupling:** Modifying API endpoints or network logic in `src/api.ts` has zero ripple effect on DOM rendering functions in `src/ui.ts`.
+- **Flexible Dependency Injection:** The `ApiService` constructor allows injecting custom API base URLs (e.g. for mock or staging servers) without altering application or UI logic.
+
+---
+
