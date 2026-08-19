@@ -27,10 +27,18 @@ function parseStateFromUrl(): { minLength: number; page: number } {
     const minLenParam = Number(params.get('minLen'));
     const pageParam = Number(params.get('page'));
 
+    // Default minLength to 4 as specified in assignment requirements
     const minLength = (!isNaN(minLenParam) && minLenParam >= 1) ? Math.floor(minLenParam) : 4;
     const page = (!isNaN(pageParam) && pageParam >= 1) ? Math.floor(pageParam) : 1;
 
     return { minLength, page };
+}
+
+function clearUserGrid(): void {
+    const container = document.querySelector('#users-container');
+    if (container) container.innerHTML = '';
+    renderUserCount(0);
+    renderPagination(0, 1);
 }
 
 export async function loadUsers(): Promise<void> {
@@ -40,13 +48,11 @@ export async function loadUsers(): Promise<void> {
 
         // Check if API returned an error
         if (!result.success) {
-            const container = document.querySelector('#users-container');
-            if (container) container.innerHTML = '';
+            clearUserGrid();
             renderStatus(`Could not load users: ${result.error}`);
             return;
         }
 
-        // result.success is true, so result.data is guaranteed to be GitHubUser[]!
         allUsers = transformUsers(result.data);
 
         // Restore filter and page from URL parameters
@@ -63,15 +69,13 @@ export async function loadUsers(): Promise<void> {
 
         renderCurrentPage();
         renderStatus('');
-        renderUserCount(displayedUsers.length);
 
         const applyButton = document.querySelector('#apply-filter');
         if (applyButton) {
             applyButton.addEventListener('click', handleFilter);
         }
     } catch (error) {
-        const container = document.querySelector('#users-container');
-        if (container) container.innerHTML = '';
+        clearUserGrid();
         const message = error instanceof Error ? error.message : 'Unknown error';
         renderStatus(`Could not load users: ${message}`);
     }
@@ -98,13 +102,15 @@ function handleFilter(): void {
     const rawVal = minLengthInput ? minLengthInput.value.trim() : '';
 
     if (rawVal === '' || isNaN(Number(rawVal))) {
+        clearUserGrid();
         renderStatus('Please enter a valid positive number for minimum login length.');
         return;
     }
 
     const minLength = Number(rawVal);
-    if (minLength < 1) {
-        renderStatus('Minimum login length must be at least 1.');
+    if (minLength < 4) {
+        clearUserGrid();
+        renderStatus('Minimum login length must be at least 4.');
         return;
     }
 
