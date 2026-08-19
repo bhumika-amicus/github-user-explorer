@@ -28,3 +28,9 @@ export interface GitHubRepo {
     description: string | null;
     stargazers_count: number;
 }
+
+
+// Using Generic Type for API Results
+export type ApiResult<T> =
+    | { success: true; data: T }
+    | { success: false; error: string };

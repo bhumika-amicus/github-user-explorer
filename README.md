@@ -74,7 +74,7 @@ github-user-explorer/
 ├── src/                   # TypeScript source code
 │   ├── api.ts             # Generic API helper and fetch functions
 │   ├── details.ts
-│   ├── types.ts           # Centralized TypeScript interfaces
+│   ├── types.ts           # Centralized TypeScript interfaces & Union types
 │   ├── ui.ts
 │   └── users.ts
 ├── screenshots/           # Application & compiler output screenshots
@@ -195,10 +195,66 @@ export async function httpGet<T>(url: string): Promise<T> {
 }
 ```
 
-#### 3. After (Clean, Reusable & Strongly Typed with Generics):
+---
+
+## 📌 Task 4: Typed Success and Error Results (Union Types)
+
+To avoid uncaught runtime exceptions when network requests fail, we evolved `httpGet<T>` into a safe result pattern using a **Discriminated Union Type** `ApiResult<T>` defined in `src/types.ts`:
+
 ```typescript
+export type ApiResult<T> =
+    | { success: true; data: T }
+    | { success: false; error: string };
+```
+
+### Evolution: `httpGet<T>` vs `safeHttpGet<T>`
+
+#### 1. Earlier Helper (`httpGet` — Threw Raw Errors):
+```typescript
+// Required try/catch blocks around every invocation to prevent app crashes
+export async function httpGet<T>(url: string): Promise<T> {
+    const response = await fetch(url);
+    if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+    return await response.json();
+}
+
 export async function fetchUsers(): Promise<GitHubUser[]> {
     return await httpGet<GitHubUser[]>(`${BASE_URL}/users`);
+}
+```
+
+#### 2. Updated Helper (`safeHttpGet` — Returns Typed Union Result):
+```typescript
+// Catches network/HTTP errors and returns ApiResult<T>
+export async function safeHttpGet<T>(url: string): Promise<ApiResult<T>> {
+    try {
+        const response = await fetch(url);
+        if (!response.ok) {
+            return { success: false, error: `HTTP error! Status: ${response.status}` };
+        }
+        const data: T = await response.json();
+        return { success: true, data };
+    } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'An unexpected network error occurred';
+        return { success: false, error: errorMessage };
+    }
+}
+
+export async function fetchUsers(): Promise<ApiResult<GitHubUser[]>> {
+    return await safeHttpGet<GitHubUser[]>(`${BASE_URL}/users`);
+}
+```
+
+### Usage Pattern in Application Code :
+```typescript
+const result = await fetchUsers();
+
+if (result.success) {
+    // TypeScript type-narrows result.data to GitHubUser[]
+    console.log(result.data);
+} else {
+    // TypeScript type-narrows result.error to string
+    console.error(result.error);
 }
 ```
 
