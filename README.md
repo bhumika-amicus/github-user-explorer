@@ -245,16 +245,60 @@ export async function fetchUsers(): Promise<ApiResult<GitHubUser[]>> {
 }
 ```
 
-### Usage Pattern in Application Code :
+### Application Logic Migration (`src/users.ts` & `src/details.ts`):
+
+#### 1. Old Application Code (Broken when `ApiResult` introduced):
+Previously, callers assumed `fetchUsers()` returned a raw array directly:
 ```typescript
+// Previously: fetchUsers() returned a raw array
+const rawUsers = await fetchUsers();
+allUsers = transformUsers(rawUsers); // Called rawUsers.map() directly
+```
+*Why this broke:* Once `fetchUsers()` started returning `{ success: true, data: [...] }`, `rawUsers` became an **object**, not an array. Calling `rawUsers.map()` threw `rawUsers.map is not a function`.
+
+#### 2. New Application Code (Safe `ApiResult` Handling in `src/users.ts`):
+Callers now check `result.success` before extracting `result.data`:
+```typescript
+// Now: fetchUsers() returns ApiResult<GitHubUser[]>
 const result = await fetchUsers();
 
-if (result.success) {
-    // TypeScript type-narrows result.data to GitHubUser[]
-    console.log(result.data);
+if (!result.success) {
+    renderStatus(`Could not load users: ${result.error}`);
+    return;
+}
+
+// TypeScript type-narrows result.data to GitHubUser[] array
+allUsers = transformUsers(result.data);
+```
+
+#### 3. Parallel API Fetching & Type Narrowing (`src/details.ts`):
+Similarly, `src/details.ts` was updated to unpack `ApiResult` objects returned by parallel `Promise.all` requests (`fetchUserProfile`, `fetchUserFollowers`, `fetchUserRepos`), allowing each section to render independently with type narrowing:
+
+```typescript
+// Promise.all returns [ApiResult<GitHubUser>, ApiResult<GitHubFollower[]>, ApiResult<GitHubRepo[]>]
+const [profileRes, followersRes, reposRes] = await Promise.all([
+    fetchUserProfile(username),
+    fetchUserFollowers(username),
+    fetchUserRepos(username)
+]);
+
+// Type-narrowing profile result
+if (profileRes.success) {
+    renderProfile(profileRes.data); // Type-narrowed to GitHubUser
+}
+
+// Type-narrowing followers result (Graceful fallback)
+if (followersRes.success) {
+    renderFollowers(followersRes.data); // Type-narrowed to GitHubFollower[]
 } else {
-    // TypeScript type-narrows result.error to string
-    console.error(result.error);
+    renderFollowers([]);
+}
+
+// Type-narrowing repos result (Graceful fallback)
+if (reposRes.success) {
+    renderRepos(reposRes.data); // Type-narrowed to GitHubRepo[]
+} else {
+    renderRepos([]);
 }
 ```
 

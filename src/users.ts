@@ -31,22 +31,31 @@ function parseStateFromUrl() {
 
     return { minLength, page };
 }
-
 export async function loadUsers() {
     try {
         renderSkeletons(9);
-        const rawUsers = await fetchUsers();
-        allUsers = transformUsers(rawUsers);
+        const result = await fetchUsers();
+
+        // Check if API returned an error
+        if (!result.success) {
+            const container = document.querySelector('#users-container');
+            if (container) container.innerHTML = '';
+            renderStatus(`Could not load users: ${result.error}`);
+            return;
+        }
+
+        // result.success is true, so result.data is guaranteed to be GitHubUser[]!
+        allUsers = transformUsers(result.data);
 
         // Restore filter and page from URL parameters
         const { minLength, page } = parseStateFromUrl();
-        const minLengthInput = document.querySelector('#min-login-length');
+        const minLengthInput = document.querySelector('#min-login-length') as HTMLInputElement | null;
         if (minLengthInput) {
-            minLengthInput.value = minLength;
+            minLengthInput.value = String(minLength);
         }
 
         displayedUsers = allUsers.filter(user => user.login.length >= minLength);
-        
+
         const totalPages = Math.ceil(displayedUsers.length / pageSize) || 1;
         currentPage = Math.min(page, totalPages);
 
@@ -60,8 +69,9 @@ export async function loadUsers() {
         }
     } catch (error) {
         const container = document.querySelector('#users-container');
-        if (container) container.innerHTML = ''; // Clear skeletons on error
-        renderStatus(`Could not load users: ${error.message}`);
+        if (container) container.innerHTML = '';
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        renderStatus(`Could not load users: ${message}`);
     }
 }
 

@@ -5,28 +5,59 @@ async function initDetails() {
     const params = new URLSearchParams(window.location.search);
     const username = params.get('username');
     if (!username) {
-        statusEl.textContent = 'No username specified in URL.';
+        if (statusEl)
+            statusEl.textContent = 'No username specified in URL.';
         return;
     }
     try {
-        statusEl.textContent = 'Loading user details...';
+        if (statusEl)
+            statusEl.textContent = 'Loading user details...';
         renderDetailSkeletons();
-        // Parallel fetch
-        const [profile, followers, repos] = await Promise.all([
+        // Parallel fetch returning ApiResult objects
+        const [profileRes, followersRes, reposRes] = await Promise.all([
             fetchUserProfile(username),
             fetchUserFollowers(username),
             fetchUserRepos(username)
         ]);
-        statusEl.textContent = ''; // Clear status message
-        renderProfile(profile);
-        renderFollowers(followers);
-        renderRepos(repos);
+        if (statusEl)
+            statusEl.textContent = ''; // Clear status message
+        // Handle profile result
+        if (profileRes.success) {
+            renderProfile(profileRes.data);
+        }
+        else {
+            const profileCard = document.querySelector('#profile-card');
+            if (profileCard)
+                profileCard.innerHTML = `<p class="error">Could not load profile: ${profileRes.error}</p>`;
+        }
+        // Handle followers result
+        if (followersRes.success) {
+            renderFollowers(followersRes.data);
+        }
+        else {
+            renderFollowers([]);
+        }
+        // Handle repositories result
+        if (reposRes.success) {
+            renderRepos(reposRes.data);
+        }
+        else {
+            renderRepos([]);
+        }
     }
     catch (error) {
-        document.querySelector('#profile-card').innerHTML = '';
-        document.querySelector('#followers-list').innerHTML = '';
-        document.querySelector('#repos-list').innerHTML = '';
-        statusEl.textContent = `Could not load details: ${error.message}`;
+        const profileCard = document.querySelector('#profile-card');
+        const followersList = document.querySelector('#followers-list');
+        const reposList = document.querySelector('#repos-list');
+        if (profileCard)
+            profileCard.innerHTML = '';
+        if (followersList)
+            followersList.innerHTML = '';
+        if (reposList)
+            reposList.innerHTML = '';
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        if (statusEl)
+            statusEl.textContent = `Could not load details: ${message}`;
     }
 }
 document.addEventListener('DOMContentLoaded', initDetails);
