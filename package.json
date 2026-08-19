@@ -1,0 +1,24 @@
+{
+  "name": "github-user-explorer",
+  "version": "1.0.0",
+  "description": "A modern, responsive single-page web application to search, filter, and explore GitHub users and detailed profile statistics using the GitHub REST API.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bhumika-amicus/github-user-explorer.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/bhumika-amicus/github-user-explorer/issues"
+  },
+  "homepage": "https://github.com/bhumika-amicus/github-user-explorer#readme",
+  "devDependencies": {
+    "typescript": "^7.0.2"
+  }
+}
