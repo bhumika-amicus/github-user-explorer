@@ -21,8 +21,12 @@ export class ApiService {
         }
     }
 
-    public async getUsers(): Promise<ApiResult<GitHubUser[]>> {
-        return this.request<GitHubUser[]>('/users');
+    public async getUsers(since?: number): Promise<ApiResult<GitHubUser[]>> {
+        const endpoint = since !== undefined
+            ? `/users?per_page=9&since=${since}`
+            : '/users?per_page=9';
+
+        return this.request<GitHubUser[]>(endpoint);
     }
 
     public async getUserProfile(username: string): Promise<ApiResult<GitHubUser>> {

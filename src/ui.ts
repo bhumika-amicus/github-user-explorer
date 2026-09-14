@@ -1,4 +1,4 @@
-import { GitHubUser, GitHubFollower, GitHubRepo, TransformedUser } from './types.js';
+import type { GitHubUser, GitHubFollower, GitHubRepo, TransformedUser } from './types.js';
 
 export function renderUsers(users: TransformedUser[]): void {
     const container = document.querySelector('#users-container');
@@ -59,35 +59,25 @@ export function renderUserCount(count: number): void {
     }
 }
 
-export function renderPagination(totalPages: number, currentPage: number): void {
+export function renderPagination(currentPage: number, hasNextPage: boolean): void {
     const nav = document.querySelector('#pagination');
     if (!nav) return;
 
-    nav.innerHTML = ''; // Clear old buttons
-    if (totalPages <= 1) return; // Don't show pagination if only 1 page
+    nav.innerHTML = '';
 
-    // Previous Button
     const prevBtn = document.createElement('button');
-    prevBtn.textContent = 'Prev';
+    prevBtn.textContent = 'Previous';
     prevBtn.disabled = currentPage === 1;
     prevBtn.dataset.page = String(currentPage - 1);
     nav.appendChild(prevBtn);
 
-    // Page Number Buttons
-    for (let i = 1; i <= totalPages; i++) {
-        const btn = document.createElement('button');
-        btn.textContent = String(i);
-        if (i === currentPage) {
-            btn.classList.add('primary'); // Styled as active page
-        }
-        btn.dataset.page = String(i);
-        nav.appendChild(btn);
-    }
+    const pageLabel = document.createElement('span');
+    pageLabel.textContent = `Page ${currentPage}`;
+    nav.appendChild(pageLabel);
 
-    // Next Button
     const nextBtn = document.createElement('button');
     nextBtn.textContent = 'Next';
-    nextBtn.disabled = currentPage === totalPages;
+    nextBtn.disabled = !hasNextPage;
     nextBtn.dataset.page = String(currentPage + 1);
     nav.appendChild(nextBtn);
 }

@@ -15,10 +15,20 @@
     </header>
 
     <main>
-        <section id="filter" class="filter-section">
-            <label for="min-login-length">Minimum login length:</label>
-            <input id="min-login-length" type="number" min="4" value="4">
-            <button id="apply-filter" class="primary">Apply</button>
+        <section id="user-controls" class="filter-section">
+            <label for="user-search">Search users:</label>
+            <input
+                id="user-search"
+                type="search"
+                placeholder="Search by Username"
+                autocomplete="off"
+            >
+
+            <label for="sort-users">Sort:</label>
+                <select id="sort-users">
+                    <option value="asc">A → Z</option>
+                    <option value="desc">Z → A</option>
+                </select>
         </section>
 
         <p id="user-count"></p>

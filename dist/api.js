@@ -16,8 +16,11 @@ export class ApiService {
             return { success: false, error: errorMessage };
         }
     }
-    async getUsers() {
-        return this.request('/users');
+    async getUsers(since) {
+        const endpoint = since !== undefined
+            ? `/users?per_page=9&since=${since}`
+            : '/users?per_page=9';
+        return this.request(endpoint);
     }
     async getUserProfile(username) {
         return this.request(`/users/${username}`);

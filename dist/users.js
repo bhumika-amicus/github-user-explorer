@@ -1,9 +1,11 @@
 import { apiService } from './api.js';
 import { renderUsers, renderStatus, renderUserCount, renderPagination, renderSkeletons } from './ui.js';
-let allUsers = [];
-let displayedUsers = [];
+let currentPageUsers = [];
 let currentPage = 1;
 const pageSize = 9;
+let searchTerm = '';
+let sortDirection = 'asc';
+const pageCursors = [undefined];
 export function transformUsers(rawUsers) {
     return rawUsers.map(({ login, id, avatar_url }) => ({
         login,
@@ -11,32 +13,33 @@ export function transformUsers(rawUsers) {
         avatar: avatar_url
     }));
 }
-function updateUrlParams(minLen, page) {
-    const url = new URL(window.location.href);
-    url.searchParams.set('minLen', String(minLen));
-    url.searchParams.set('page', String(page));
-    window.history.pushState({}, '', url.toString());
-}
-function parseStateFromUrl() {
-    const params = new URLSearchParams(window.location.search);
-    const minLenParam = Number(params.get('minLen'));
-    const pageParam = Number(params.get('page'));
-    // Default minLength to 4 as specified in assignment requirements
-    const minLength = (!isNaN(minLenParam) && minLenParam >= 4) ? Math.floor(minLenParam) : 4;
-    const page = (!isNaN(pageParam) && pageParam >= 1) ? Math.floor(pageParam) : 1;
-    return { minLength, page };
-}
 function clearUserGrid() {
     const container = document.querySelector('#users-container');
-    if (container)
+    if (container) {
         container.innerHTML = '';
+    }
     renderUserCount(0);
-    renderPagination(0, 1);
+    renderPagination(1, false);
+}
+function getVisibleUsers() {
+    const normalizedSearch = searchTerm.trim().toLowerCase();
+    const filteredUsers = normalizedSearch === ''
+        ? [...currentPageUsers]
+        : currentPageUsers.filter(user => user.login.toLowerCase().includes(normalizedSearch));
+    return filteredUsers.sort((a, b) => {
+        const comparison = a.login.localeCompare(b.login);
+        return sortDirection === 'asc'
+            ? comparison
+            : -comparison;
+    });
 }
 export async function loadUsers() {
     try {
-        renderSkeletons(9);
-        const result = await apiService.getUsers();
+        renderSkeletons(pageSize);
+        console.log('Current page:', currentPage);
+        const since = pageCursors[currentPage - 1];
+        console.log('Since cursor:', since);
+        const result = await apiService.getUsers(since);
         // Check if API returned an error
         if (!result.success) {
             console.error('getUsers API failure:', result.error);
@@ -44,74 +47,37 @@ export async function loadUsers() {
             renderStatus(`Could not load users: ${result.error}`);
             return;
         }
-        allUsers = transformUsers(result.data);
-        // Restore filter and page from URL parameters
-        const { minLength, page } = parseStateFromUrl();
-        const minLengthInput = document.querySelector('#min-login-length');
-        if (minLengthInput) {
-            minLengthInput.value = String(minLength);
+        currentPageUsers = transformUsers(result.data);
+        // Store the last user ID as the cursor for the next page
+        if (result.data.length === pageSize) {
+            const lastUser = result.data[result.data.length - 1];
+            pageCursors[currentPage] = lastUser.id;
         }
-        displayedUsers = allUsers.filter(user => user.login.length >= minLength);
-        const totalPages = Math.ceil(displayedUsers.length / pageSize) || 1;
-        currentPage = Math.min(page, totalPages);
+        else {
+            // No full page means there is no next page
+            pageCursors[currentPage] = undefined;
+        }
         renderCurrentPage();
-        const applyButton = document.querySelector('#apply-filter');
-        if (applyButton) {
-            applyButton.addEventListener('click', handleFilter);
-        }
     }
     catch (error) {
         console.error('Unexpected error in loadUsers:', error);
         clearUserGrid();
-        const message = error instanceof Error ? error.message : 'Unknown error';
+        const message = error instanceof Error
+            ? error.message
+            : 'Unknown error';
         renderStatus(`Could not load users: ${message}`);
     }
 }
 document.addEventListener('DOMContentLoaded', loadUsers);
 window.addEventListener('popstate', () => {
-    if (allUsers.length === 0)
-        return;
-    const { minLength, page } = parseStateFromUrl();
-    const minLengthInput = document.querySelector('#min-login-length');
-    if (minLengthInput) {
-        minLengthInput.value = String(minLength);
-    }
-    displayedUsers = allUsers.filter(user => user.login.length >= minLength);
-    const totalPages = Math.ceil(displayedUsers.length / pageSize) || 1;
-    currentPage = Math.min(page, totalPages);
-    renderStatus('');
-    renderCurrentPage();
+    loadUsers();
 });
-function handleFilter() {
-    const minLengthInput = document.querySelector('#min-login-length');
-    const rawVal = minLengthInput ? minLengthInput.value.trim() : '';
-    if (rawVal === '' || isNaN(Number(rawVal))) {
-        clearUserGrid();
-        renderStatus('Please enter a valid positive number for minimum login length.');
-        return;
-    }
-    const minLength = Number(rawVal);
-    if (minLength < 4) {
-        clearUserGrid();
-        renderStatus('Minimum login length must be at least 4.');
-        return;
-    }
-    renderStatus(''); // Clear error status
-    displayedUsers = allUsers.filter(user => user.login.length >= minLength);
-    currentPage = 1;
-    updateUrlParams(minLength, currentPage);
-    renderCurrentPage();
-}
 function renderCurrentPage() {
-    const totalPages = Math.ceil(displayedUsers.length / pageSize) || 1;
-    // Calculate start and end index for slice
-    const startIndex = (currentPage - 1) * pageSize;
-    const endIndex = startIndex + pageSize;
-    const pageUsers = displayedUsers.slice(startIndex, endIndex);
-    // Render UI
-    renderUserCount(displayedUsers.length);
-    renderUsers(pageUsers);
-    renderPagination(totalPages, currentPage);
+    const visibleUsers = getVisibleUsers();
+    renderUserCount(visibleUsers.length);
+    renderUsers(visibleUsers);
+    const hasNextPage = pageCursors[currentPage] !== undefined;
+    renderPagination(currentPage, hasNextPage);
 }
 function handlePaginationClick(event) {
     const target = event.target;
@@ -119,14 +85,36 @@ function handlePaginationClick(event) {
         return;
     const targetPage = target.dataset.page;
     if (!targetPage)
-        return; // Clicked outside a button, ignore
-    currentPage = Number(targetPage);
-    const minLengthInput = document.querySelector('#min-login-length');
-    const minLength = minLengthInput ? Number(minLengthInput.value) || 4 : 4;
-    updateUrlParams(minLength, currentPage);
+        return;
+    const requestedPage = Number(targetPage);
+    if (requestedPage < 1)
+        return;
+    currentPage = requestedPage;
+    loadUsers();
+}
+//used only to update the searchTerm and re-render the current page 
+// actual search happens in getVisibleUsers() which is called from renderCurrentPage()
+function handleSearch(event) {
+    const input = event.currentTarget;
+    searchTerm = input.value;
+    renderCurrentPage();
+}
+//used only to update the sortDirection and re-render the current page
+// actual sorting happens in getVisibleUsers() which is called from renderCurrentPage()
+function handleSort(event) {
+    const select = event.currentTarget;
+    sortDirection = select.value;
     renderCurrentPage();
 }
 const paginationNav = document.querySelector('#pagination');
 if (paginationNav) {
     paginationNav.addEventListener('click', handlePaginationClick);
+}
+const searchInput = document.querySelector('#user-search');
+if (searchInput) {
+    searchInput.addEventListener('input', handleSearch);
+}
+const sortSelect = document.querySelector('#sort-users');
+if (sortSelect) {
+    sortSelect.addEventListener('change', handleSort);
 }

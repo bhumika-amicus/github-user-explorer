@@ -29,6 +29,9 @@ export type TransformedUser = Pick<GitHubUser, 'login' | 'id'> & {
     avatar: string;
 };
 
+// Allowed sorting directions for the Users page
+export type SortDirection = 'asc' | 'desc';
+
 //Generic Union Type for API Results
 export type ApiResult<T> =
     | { success: true; data: T }
