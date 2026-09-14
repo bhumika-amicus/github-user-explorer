@@ -1,4 +1,4 @@
-import { GitHubUser, GitHubFollower, GitHubRepo, ApiResult } from './types.js';
+import type { GitHubUser, GitHubFollower, GitHubRepo, ApiResult , GitHubRepositorySearchResponse } from './types.js';
 
 export class ApiService {
     private baseUrl: string;
@@ -39,6 +39,15 @@ export class ApiService {
 
     public async getUserRepos(username: string): Promise<ApiResult<GitHubRepo[]>> {
         return this.request<GitHubRepo[]>(`/users/${username}/repos?per_page=5`);
+    }
+
+    public async searchRepositories( query: string, page: number = 1, perPage: number = 10):
+     Promise<ApiResult<GitHubRepositorySearchResponse>> 
+    {
+        const endpoint =
+        `/search/repositories?q=${encodeURIComponent(query)}&page=${page}&per_page=${perPage}`;
+
+    return this.request<GitHubRepositorySearchResponse>(endpoint);
     }
 }
 

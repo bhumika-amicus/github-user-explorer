@@ -36,3 +36,35 @@ export type SortDirection = 'asc' | 'desc';
 export type ApiResult<T> =
     | { success: true; data: T }
     | { success: false; error: string };
+
+
+
+//Repository search item of GitHubRepositorySearchResponse.items
+export interface GitHubRepositorySearchItem {
+    id: number;
+    name: string;
+    description: string | null;
+    html_url: string;
+    stargazers_count: number;
+    language: string | null;
+    owner: {
+        login: string;
+    };
+}
+
+//Repository search payload returned from /search/repositories
+export interface GitHubRepositorySearchResponse {
+    total_count: number;
+    incomplete_results: boolean;
+    items: GitHubRepositorySearchItem[];
+}
+
+
+export interface RepositoryDisplay {
+    name: string;
+    description: string | null;
+    ownerLogin: string;
+    stars: number;
+    language: string | null;
+    htmlUrl: string;
+}

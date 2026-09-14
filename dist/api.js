@@ -31,5 +31,9 @@ export class ApiService {
     async getUserRepos(username) {
         return this.request(`/users/${username}/repos?per_page=5`);
     }
+    async searchRepositories(query, page = 1, perPage = 10) {
+        const endpoint = `/search/repositories?q=${encodeURIComponent(query)}&page=${page}&per_page=${perPage}`;
+        return this.request(endpoint);
+    }
 }
 export const apiService = new ApiService();

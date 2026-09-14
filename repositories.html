@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Repository Search</title>
+    <link rel="stylesheet" href="./css/styles.css">
+</head>
+<body>
+
+    <main>
+        <h1>GitHub Repository Search</h1>
+
+        <form id="repository-search-form">
+            <label for="repository-search">Search repositories:</label>
+
+            <input
+                id="repository-search"
+                type="search"
+                placeholder="Search repositories..."
+                autocomplete="off"
+            >
+
+            <button type="submit">Search</button>
+        </form>
+
+        <p id="repository-validation"></p>
+
+        <p id="repository-status"></p>
+
+        <section
+            id="repositories-container"
+            aria-live="polite"
+        ></section>
+
+        <nav
+            id="repository-pagination"
+            aria-label="Repository pagination"
+        ></nav>
+    </main>
+
+    <script type="module" src="./dist/repositories.js"></script>
+</body>
+</html>

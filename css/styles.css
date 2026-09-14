@@ -48,6 +48,170 @@ main {
 	padding: 0 24px;
 }
 
+main > h1 {
+	margin-bottom: 24px;
+	font-size: 1.75rem;
+	font-weight: 600;
+}
+
+/* Repository Search Page */
+#repository-search-form {
+	display: grid;
+	grid-template-columns: auto minmax(0, 1fr) auto;
+	align-items: center;
+	gap: 12px;
+	margin-bottom: 16px;
+	padding: 16px;
+	background: var(--card-bg);
+	border: 1px solid var(--border-color);
+	border-radius: 8px;
+	box-shadow: var(--shadow-sm);
+}
+
+#repository-search-form label {
+	font-size: 0.9rem;
+	font-weight: 500;
+}
+
+#repository-search {
+	width: 100%;
+	min-height: 38px;
+	padding: 8px 12px;
+	border: 1px solid var(--border-color);
+	border-radius: 6px;
+	background: var(--card-bg);
+	color: var(--text-main);
+	font: inherit;
+	font-size: 0.9rem;
+	transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+#repository-search::placeholder {
+	color: var(--text-muted);
+}
+
+#repository-search:focus {
+	outline: none;
+	border-color: var(--accent);
+	box-shadow: 0 0 0 3px rgba(9, 105, 218, 0.15);
+}
+
+#repository-search-form button {
+	min-height: 38px;
+	background: var(--accent);
+	color: #ffffff;
+	border-color: var(--accent);
+}
+
+#repository-search-form button:hover:not(:disabled) {
+	background: var(--accent-hover);
+	border-color: var(--accent-hover);
+}
+
+#repository-validation,
+#repository-status {
+	min-height: 1.5em;
+	margin-bottom: 16px;
+	font-size: 0.9rem;
+}
+
+#repository-validation {
+	color: #9a6700;
+}
+
+#repository-status {
+	color: var(--text-muted);
+}
+
+#repositories-container {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 16px;
+}
+
+#repositories-container > article {
+	display: flex;
+	min-height: 246px;
+	flex-direction: column;
+	align-items: flex-start;
+	padding: 20px;
+	background: var(--card-bg);
+	border: 1px solid var(--border-color);
+	border-radius: 8px;
+	box-shadow: var(--shadow-sm);
+}
+
+#repositories-container > article h2 {
+	margin-bottom: 10px;
+	font-size: 1.15rem;
+	font-weight: 600;
+	line-height: 1.3;
+	overflow-wrap: anywhere;
+}
+
+#repositories-container > article > p {
+	margin-bottom: 8px;
+	color: var(--text-muted);
+	font-size: 0.9rem;
+}
+
+#repositories-container > article > p:first-of-type {
+	flex: 1;
+	width: 100%;
+	line-height: 1.55;
+}
+
+#repositories-container > article > p:not(:first-of-type) {
+	font-size: 0.82rem;
+}
+
+#repositories-container > article > p:nth-of-type(2),
+#repositories-container > article > p:nth-of-type(3),
+#repositories-container > article > p:nth-of-type(4) {
+	color: var(--text-main);
+}
+
+#repositories-container > article a {
+	display: inline-block;
+	margin-top: 8px;
+	color: var(--accent);
+	font-size: 0.9rem;
+	font-weight: 500;
+	text-decoration: none;
+}
+
+#repositories-container > article a:hover {
+	text-decoration: underline;
+}
+
+#repository-pagination {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 10px;
+	margin-top: 28px;
+}
+
+#repository-pagination button {
+	min-width: 88px;
+	background: var(--accent);
+	color: #ffffff;
+	border-color: var(--accent);
+}
+
+#repository-pagination button:hover:not(:disabled) {
+	background: var(--accent-hover);
+	border-color: var(--accent-hover);
+}
+
+#repository-pagination span {
+	min-width: 118px;
+	color: var(--text-muted);
+	font-size: 0.9rem;
+	font-weight: 500;
+	text-align: center;
+}
+
 /* Filter Bar Section */
 .filter-section {
 	background: var(--card-bg);
@@ -336,6 +500,32 @@ button:disabled {
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
+	main {
+		margin: 24px auto;
+		padding: 0 16px;
+	}
+
+	main > h1 {
+		font-size: 1.5rem;
+	}
+
+	#repository-search-form {
+		grid-template-columns: 1fr;
+		align-items: stretch;
+	}
+
+	#repository-search-form button {
+		width: 100%;
+	}
+
+	#repositories-container {
+		grid-template-columns: 1fr;
+	}
+
+	#repositories-container > article {
+		min-height: 0;
+	}
+
 	#users-container {
 		grid-template-columns: 1fr;
 	}
@@ -355,6 +545,10 @@ button:disabled {
 	}
 
 	.pagination {
+		margin-top: 24px;
+	}
+
+	#repository-pagination {
 		margin-top: 24px;
 	}
 }
