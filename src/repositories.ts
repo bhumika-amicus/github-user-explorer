@@ -7,8 +7,6 @@ const searchForm = document.querySelector<HTMLFormElement>( '#repository-search-
 
 const searchInput = document.querySelector<HTMLInputElement>('#repository-search' );
 
-const validationMessage = document.querySelector<HTMLParagraphElement>( '#repository-validation' );
-
 const statusMessage = document.querySelector<HTMLParagraphElement>(
     '#repository-status'
 );
@@ -100,13 +98,8 @@ function handleSearchSubmit(event: SubmitEvent): void {
     const query = searchInput.value.trim();
 
     if (query === '') {
-        if (validationMessage) {
-            validationMessage.textContent =
-                'Please enter a repository search term.';
-        }
-
         if (statusMessage) {
-            statusMessage.textContent = '';
+            statusMessage.textContent = 'Please enter a repository search term.';
         }
 
         if (repositoriesContainer) {
@@ -120,8 +113,8 @@ function handleSearchSubmit(event: SubmitEvent): void {
         return;
     }
 
-    if (validationMessage) {
-        validationMessage.textContent = '';
+    if (statusMessage) {
+        statusMessage.textContent = '';
     }
 
     currentQuery = query;

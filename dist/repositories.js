@@ -2,7 +2,6 @@ import { apiService } from './api.js';
 import { renderRepositories, renderRepositoryPagination, renderRepositoryLoading } from './ui.js';
 const searchForm = document.querySelector('#repository-search-form');
 const searchInput = document.querySelector('#repository-search');
-const validationMessage = document.querySelector('#repository-validation');
 const statusMessage = document.querySelector('#repository-status');
 const repositoriesContainer = document.querySelector('#repositories-container');
 const paginationContainer = document.querySelector('#repository-pagination');
@@ -73,12 +72,8 @@ function handleSearchSubmit(event) {
         return;
     const query = searchInput.value.trim();
     if (query === '') {
-        if (validationMessage) {
-            validationMessage.textContent =
-                'Please enter a repository search term.';
-        }
         if (statusMessage) {
-            statusMessage.textContent = '';
+            statusMessage.textContent = 'Please enter a repository search term.';
         }
         if (repositoriesContainer) {
             repositoriesContainer.innerHTML = '';
@@ -88,8 +83,8 @@ function handleSearchSubmit(event) {
         }
         return;
     }
-    if (validationMessage) {
-        validationMessage.textContent = '';
+    if (statusMessage) {
+        statusMessage.textContent = '';
     }
     currentQuery = query;
     currentPage = 1;
