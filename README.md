@@ -502,3 +502,77 @@ Instead of rigid class inheritance (`extends`), the application architecture is 
 
 ---
 
+# 📌 Advanced JavaScript & TypeScript — GitHub Explorer Enhancement
+
+The existing GitHub Users Explorer was enhanced with client-side user search and sorting, plus a new GitHub repository search feature, while continuing to use the current TypeScript structure and reusable API patterns.
+
+## ✨ What Changed
+
+- Added in-place search by GitHub username/login on the Users page.
+- Added A→Z and Z→A sorting.
+- Search and sorting can be combined.
+- Search and sorting do not make additional API requests.
+- Existing Users API pagination is preserved.
+- Added a new `repositories.html` page for GitHub repository search.
+- Added typed repository API models and API response handling.
+- Added repository result cards with name, description, owner, stars, language, and GitHub URL.
+- Added repository pagination.
+- Added loading, success, empty, validation, and error states.
+- Reused the existing generic API request/helper pattern.
+
+## 🔎 Feature 1 — Users Search & Sort
+
+- Users can be searched by login/name.
+- Search is performed on the currently loaded users.
+- Users can be sorted A→Z or Z→A.
+- Search and sorting work together.
+- Search and sorting do not trigger another API request.
+- Existing GitHub Users pagination continues to work.
+
+### Screenshots
+
+**Users — Normal State**
+
+![Users — Normal State](./screenshots/users_normal.png)
+
+**Users — Search & Sort**
+
+![Users — Search & Sort](./screenshots/users_search_sort.png)
+
+## 📦 Feature 2 — Repository Search
+
+- Added a dedicated `repositories.html` page.
+- Users can search GitHub repositories using a search query.
+- Empty queries are validated without making an API request.
+- Repository results display name, description, owner, stars, language, and GitHub URL.
+- Nullable description and language values are handled safely.
+- Repository results support pagination.
+- Loading, success, empty, and error states are handled.
+- API failures display a user-friendly error message.
+
+### Screenshots
+
+**Repository Search — Successful Results**
+
+![Repository Search — Successful Results](./screenshots/repository_success.png)
+
+**Repository Search — Empty Query**
+
+![Repository Search — Empty Query](./screenshots/repository_empty_query.png)
+
+**Repository Search — No Results**
+
+![Repository Search — No Results](./screenshots/repository_no_results.png)
+
+**Repository Search — Error State**
+
+![Repository Search — Error State](./screenshots/repository_error.png)
+
+## 🛠️ Build & Run
+
+### Install Dependencies
+
+```bash
+npm install
+```
+
