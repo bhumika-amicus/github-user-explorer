@@ -68,3 +68,10 @@ export interface RepositoryDisplay {
     language: string | null;
     htmlUrl: string;
 }
+// Repository status for the Repositories page
+export type RepositoryStatus =
+    | 'idle'
+    | 'loading'
+    | 'success'
+    | 'empty'
+    | 'error';

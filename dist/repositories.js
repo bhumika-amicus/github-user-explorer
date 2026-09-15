@@ -1,14 +1,17 @@
 import { apiService } from './api.js';
+import { renderRepositories, renderRepositoryPagination, renderRepositoryLoading } from './ui.js';
 const searchForm = document.querySelector('#repository-search-form');
 const searchInput = document.querySelector('#repository-search');
 const validationMessage = document.querySelector('#repository-validation');
 const statusMessage = document.querySelector('#repository-status');
 const repositoriesContainer = document.querySelector('#repositories-container');
 const paginationContainer = document.querySelector('#repository-pagination');
+const searchButton = document.querySelector('#repository-search-form button[type="submit"]');
 let currentQuery = '';
 let currentPage = 1;
 let totalRepositories = 0;
 const pageSize = 10;
+let repositoryStatus = 'idle';
 function transformRepositories(repositories) {
     return repositories.map(repository => ({
         name: repository.name,
@@ -19,99 +22,51 @@ function transformRepositories(repositories) {
         htmlUrl: repository.html_url
     }));
 }
-function renderRepositories(repositories) {
-    if (!repositoriesContainer)
-        return;
-    repositoriesContainer.innerHTML = '';
-    for (const repository of repositories) {
-        const card = document.createElement('article');
-        const name = document.createElement('h2');
-        name.textContent = repository.name;
-        const description = document.createElement('p');
-        description.textContent =
-            repository.description ?? 'No description available.';
-        const owner = document.createElement('p');
-        owner.textContent = `Owner: ${repository.ownerLogin}`;
-        const stars = document.createElement('p');
-        stars.textContent = `Stars: ${repository.stars}`;
-        const language = document.createElement('p');
-        language.textContent =
-            `Language: ${repository.language ?? 'Not specified'}`;
-        const link = document.createElement('a');
-        link.textContent = 'View on GitHub';
-        link.href = repository.htmlUrl;
-        link.target = '_blank';
-        link.rel = 'noopener noreferrer';
-        card.appendChild(name);
-        card.appendChild(description);
-        card.appendChild(owner);
-        card.appendChild(stars);
-        card.appendChild(language);
-        card.appendChild(link);
-        repositoriesContainer.appendChild(card);
-    }
-}
-function renderPagination() {
-    if (!paginationContainer)
-        return;
-    paginationContainer.innerHTML = '';
-    const totalPages = Math.ceil(totalRepositories / pageSize);
-    if (totalPages <= 1)
-        return;
-    const previousButton = document.createElement('button');
-    previousButton.textContent = 'Previous';
-    previousButton.disabled = currentPage === 1;
-    previousButton.dataset.page = String(currentPage - 1);
-    const pageLabel = document.createElement('span');
-    pageLabel.textContent = `Page ${currentPage} of ${totalPages}`;
-    const nextButton = document.createElement('button');
-    nextButton.textContent = 'Next';
-    nextButton.disabled = currentPage === totalPages;
-    nextButton.dataset.page = String(currentPage + 1);
-    paginationContainer.appendChild(previousButton);
-    paginationContainer.appendChild(pageLabel);
-    paginationContainer.appendChild(nextButton);
-}
 async function loadRepositories(query, page) {
-    showLoading();
+    repositoryStatus = 'loading';
+    renderRepositoryLoading();
     try {
         const result = await apiService.searchRepositories(query, page, pageSize);
         if (!result.success) {
-            console.error('Repository search failed:', result.error);
+            repositoryStatus = 'error';
             if (statusMessage) {
-                statusMessage.textContent =
-                    `Could not load repositories: ${result.error}`;
+                statusMessage.textContent = `Could not load repositories: ${result.error}`;
             }
             return;
         }
         totalRepositories = result.data.total_count;
         const repositories = transformRepositories(result.data.items);
+        // Handle the case where no repositories are found
         if (repositories.length === 0) {
+            repositoryStatus = 'empty';
             if (statusMessage) {
                 statusMessage.textContent = 'No repositories found.';
             }
             return;
         }
+        // If we reach here, it means we have successfully fetched repositories
+        repositoryStatus = 'success';
         if (statusMessage) {
             statusMessage.textContent = '';
         }
         renderRepositories(repositories);
-        renderPagination();
+        renderRepositoryPagination(page, totalRepositories, pageSize);
     }
     catch (error) {
+        repositoryStatus = 'error';
         console.error('Unexpected repository search error:', error);
         if (statusMessage) {
-            const message = error instanceof Error
-                ? error.message
-                : 'An unexpected error occurred.';
-            statusMessage.textContent =
-                `Could not load repositories: ${message}`;
+            statusMessage.textContent = 'Something went wrong while loading repositories. Please try again.';
         }
     }
     finally {
-        console.log('Repository request completed.');
+        console.log(`Repository request completed with status: ${repositoryStatus}`);
+        if (searchButton) {
+            searchButton.disabled = false;
+        }
     }
 }
+// Handle form submission for repository search when the user presses Enter or clicks the search button
 function handleSearchSubmit(event) {
     event.preventDefault();
     if (!searchInput)
@@ -140,24 +95,9 @@ function handleSearchSubmit(event) {
     currentPage = 1;
     loadRepositories(currentQuery, currentPage);
 }
+// Add event listener for form submission
 if (searchForm) {
     searchForm.addEventListener('submit', handleSearchSubmit);
-}
-function showLoading() {
-    if (statusMessage) {
-        statusMessage.textContent = 'Loading repositories...';
-    }
-    if (repositoriesContainer) {
-        repositoriesContainer.innerHTML = '';
-    }
-    if (paginationContainer) {
-        paginationContainer.innerHTML = '';
-    }
-}
-function clearLoading() {
-    if (statusMessage) {
-        statusMessage.textContent = '';
-    }
 }
 function handlePaginationClick(event) {
     const target = event.target;

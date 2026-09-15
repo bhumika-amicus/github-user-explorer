@@ -7,17 +7,23 @@ export class ApiService {
         this.baseUrl = baseUrl;
     }
 
+
     private async request<T>(endpoint: string): Promise<ApiResult<T>> {
         try {
             const response = await fetch(`${this.baseUrl}${endpoint}`);
+
             if (!response.ok) {
-                return { success: false, error: `HTTP error! Status: ${response.status}` };
+                console.error(`HTTP error: ${response.status}`);
+                return { success: false, error: 'Unable to complete the request. Please try again.' };
             }
+
             const data: T = await response.json();
             return { success: true, data };
+
         } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : 'An unexpected network error occurred';
-            return { success: false, error: errorMessage };
+            console.error('Network error:', err);
+            return { success: false, error: 'Unable to connect to the server. Please check your connection and try again.'
+            };
         }
     }
 

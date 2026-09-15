@@ -1,4 +1,4 @@
-import type { GitHubUser, GitHubFollower, GitHubRepo, TransformedUser } from './types.js';
+import type { GitHubUser, GitHubFollower, GitHubRepo, TransformedUser, RepositoryDisplay} from './types.js';
 
 export function renderUsers(users: TransformedUser[]): void {
     const container = document.querySelector('#users-container');
@@ -237,5 +237,143 @@ export function renderDetailSkeletons(): void {
                 <div class="skeleton-line short" style="margin: 0;"></div>
             </div>
         `).join('');
+    }
+}
+
+export function renderRepositories(repositories: RepositoryDisplay[]): void {
+    const container = document.querySelector('#repositories-container');
+
+    if (!container) return;
+
+    container.innerHTML = '';
+
+    if (repositories.length === 0) {
+        container.textContent = 'No repositories found.';
+        return;
+    }
+
+    repositories.forEach(repository => {
+        const card = document.createElement('article');
+
+        const name = document.createElement('h2');
+        name.textContent = repository.name;
+
+        const description = document.createElement('p');
+        description.textContent =
+            repository.description ?? 'No description available.';
+
+        const owner = document.createElement('p');
+        owner.textContent = `Owner: ${repository.ownerLogin}`;
+
+        const stars = document.createElement('p');
+        stars.textContent = `Stars: ${repository.stars}`;
+
+        const language = document.createElement('p');
+        language.textContent =
+            `Language: ${repository.language ?? 'Not specified'}`;
+
+        const link = document.createElement('a');
+        link.textContent = 'View on GitHub';
+        link.href = repository.htmlUrl;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+
+        card.appendChild(name);
+        card.appendChild(description);
+        card.appendChild(owner);
+        card.appendChild(stars);
+        card.appendChild(language);
+        card.appendChild(link);
+
+        container.appendChild(card);
+    });
+}
+
+export function renderRepositoryPagination(
+    currentPage: number,
+    totalRepositories: number,
+    pageSize: number
+): void {
+    const paginationContainer = document.querySelector('#repository-pagination');
+
+    if (!paginationContainer) return;
+
+    paginationContainer.innerHTML = '';
+
+    const calculatedPages = Math.ceil(totalRepositories / pageSize);
+    const totalPages = Math.min(calculatedPages, 100);
+
+    if (totalPages <= 1) return;
+
+    const previousButton = document.createElement('button');
+    previousButton.textContent = 'Previous';
+    previousButton.disabled = currentPage === 1;
+    previousButton.dataset.page = String(currentPage - 1);
+    paginationContainer.appendChild(previousButton);
+
+    const firstPageButton = document.createElement('button');
+    firstPageButton.textContent = '1';
+    firstPageButton.dataset.page = '1';
+    firstPageButton.disabled = currentPage === 1;
+    paginationContainer.appendChild(firstPageButton);
+
+    const startPage = Math.max(2, currentPage - 2);
+    const endPage = Math.min(totalPages - 1, currentPage + 2);
+
+    if (startPage > 2) {
+        const leftEllipsis = document.createElement('span');
+        leftEllipsis.textContent = '...';
+        paginationContainer.appendChild(leftEllipsis);
+    }
+
+    for (let page = startPage; page <= endPage; page++) {
+        const pageButton = document.createElement('button');
+        pageButton.textContent = String(page);
+        pageButton.dataset.page = String(page);
+        pageButton.disabled = page === currentPage;
+        paginationContainer.appendChild(pageButton);
+    }
+
+    if (endPage < totalPages - 1) {
+        const rightEllipsis = document.createElement('span');
+        rightEllipsis.textContent = '...';
+        paginationContainer.appendChild(rightEllipsis);
+    }
+
+    const lastPageButton = document.createElement('button');
+    lastPageButton.textContent = String(totalPages);
+    lastPageButton.dataset.page = String(totalPages);
+    lastPageButton.disabled = currentPage === totalPages;
+    paginationContainer.appendChild(lastPageButton);
+
+    const nextButton = document.createElement('button');
+    nextButton.textContent = 'Next';
+    nextButton.disabled = currentPage === totalPages;
+    nextButton.dataset.page = String(currentPage + 1);
+    paginationContainer.appendChild(nextButton);
+}
+
+export function renderRepositoryLoading(): void {
+    const statusMessage = document.querySelector('#repository-status');
+    const repositoriesContainer = document.querySelector('#repositories-container');
+    const paginationContainer = document.querySelector('#repository-pagination');
+    const searchButton = document.querySelector(
+        '#repository-search-form button[type="submit"]'
+    ) as HTMLButtonElement | null;
+
+    if (statusMessage) {
+        statusMessage.textContent = 'Loading repositories...';
+    }
+
+    if (repositoriesContainer) {
+        repositoriesContainer.innerHTML = '';
+    }
+
+    if (paginationContainer) {
+        paginationContainer.innerHTML = '';
+    }
+
+    if (searchButton) {
+        searchButton.disabled = true;
     }
 }
